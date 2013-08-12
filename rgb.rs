@@ -19,9 +19,30 @@ impl ROM {
 
     }
 
+    fn hdr_checksum(self) -> u8 {
+        let start: u16 = 0x134;
+        let end: u16 = 0x14C;
+        let mut r = (start - end - 1) as u8;
+        let mut i = start;
+        while i <= end {
+            r += self.mem[i];
+            i += 1;
+        };
+        r
+    }
+
     fn dump_header (self) {
-        let title = self.mem.slice(0x134, 0x143);
-        println(str::from_bytes(title))
+        let title = str::from_bytes(self.mem.slice(0x134, 0x143));
+        let ct = self.mem[0x147];
+        print(fmt!("Title: %s\nType : %u\n", title, ct as uint));
+        let stored_hdr_checksum = self.mem[0x014D];
+        let hdr_ck_str =
+            if self.hdr_checksum() == stored_hdr_checksum {
+                "OK"
+            } else {
+                "NOT OK"
+            };
+        println(fmt!("HDR Checksum: %02X (%s)", stored_hdr_checksum as uint, hdr_ck_str))
     }
 }
 
