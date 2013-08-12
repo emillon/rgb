@@ -2,11 +2,27 @@ use std::io;
 use std::os;
 use std::str;
 
-type Mem = ~[u8];
+struct ROM {
+    mem: ~[u8]
+}
 
-fn dump_header (m: Mem) {
-    let title = m.slice(0x134, 0x143);
-    println(str::from_bytes(title))
+impl ROM {
+    fn new(path: PosixPath) -> Result<~ROM, ~str> {
+
+        match io::read_whole_file(&path) {
+            Ok(v) => {
+                println(fmt!("Read %u bytes", v.len()));
+                Ok(~ROM { mem: v })
+            }
+            Err(s) => { Err (s) }
+        }
+
+    }
+
+    fn dump_header (self) {
+        let title = self.mem.slice(0x134, 0x143);
+        println(str::from_bytes(title))
+    }
 }
 
 fn main() {
@@ -19,12 +35,11 @@ fn main() {
     }
     let file = os::args()[1];
     let path = PosixPath(file);
-    match io::read_whole_file(&path) {
-        Ok(mem) => {
-            println(fmt!("Read %u bytes", mem.len()));
-            dump_header(mem)
+    match ROM::new(path) {
+        Ok (r) => {
+            r.dump_header()
         }
-        Err(s) => {
+        Err (s) => {
             println(fmt!("Cannot read %s: %s", file, s));
         }
     }
