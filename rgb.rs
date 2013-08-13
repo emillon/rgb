@@ -104,7 +104,7 @@ impl MMU {
                 Some (&mut self.wram[addr & 0x1fff])
             }
             0xF000 => {
-                match addr & 0x1F00 {
+                match addr & 0x0F00 {
                       0x000 | 0x100 | 0x200 | 0x300
                     | 0x400 | 0x500 | 0x600 | 0x700
                     | 0x800 | 0x900 | 0xA00 | 0xB00
@@ -385,6 +385,12 @@ impl CPU {
             }
             0xDD => {
                 fail!(fmt!("Bad opcode : %02X", opcode as uint))
+            }
+            0xE2 => { // LD (FF00+C), A
+                let a = self.r8(R8_A);
+                let c = self.r8(R8_C);
+                let addr = u16_make(0xFF, c);
+                self.mmu.wb(addr, a);
             }
             0xE5 => { // PUSH HL
                 self.reg_sp -= 2;
