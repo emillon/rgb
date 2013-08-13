@@ -19,7 +19,11 @@ impl ROM {
 
     }
 
-    fn hdr_checksum(self) -> u8 {
+    fn read_word_be(&self, offset: u16) -> u16 {
+        (self.mem[offset] as u16 << 8) + self.mem[offset + 1] as u16
+    }
+
+    fn hdr_checksum(&self) -> u8 {
         let start: u16 = 0x134;
         let end: u16 = 0x14C;
         let mut r = (start - end - 1) as u8;
@@ -28,6 +32,18 @@ impl ROM {
             r += self.mem[i];
             i += 1;
         };
+        r
+    }
+
+    fn rom_checksum(&self) -> u16 {
+        let mut r: u16 = 0;
+        let mut i = 0;
+        while i < self.mem.len() {
+            r += self.mem[i] as u16;
+            i += 1;
+        }
+        r -= self.mem[0x014E] as u16;
+        r -= self.mem[0x014F] as u16;
         r
     }
 
@@ -42,7 +58,15 @@ impl ROM {
             } else {
                 "NOT OK"
             };
-        println(fmt!("HDR Checksum: %02X (%s)", stored_hdr_checksum as uint, hdr_ck_str))
+        let stored_rom_checksum: u16 = self.read_word_be(0x014E);
+        let rom_ck_str =
+            if self.rom_checksum() == stored_rom_checksum {
+                "OK"
+            } else {
+                "NOT OK"
+            };
+        println(fmt!("HDR Checksum: %02X (%s)", stored_hdr_checksum as uint, hdr_ck_str));
+        println(fmt!("ROM Checksum: %04X (%s)", stored_rom_checksum as uint, rom_ck_str));
     }
 }
 
