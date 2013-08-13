@@ -203,7 +203,8 @@ enum R8 {
     R8_A,
     R8_F,
     R8_B,
-    R8_C
+    R8_C,
+    R8_H
 }
 
 struct CPU {
@@ -232,7 +233,8 @@ impl CPU {
             R8_A => u16_hi(self.reg_af),
             R8_F => u16_lo(self.reg_af),
             R8_B => u16_hi(self.reg_bc),
-            R8_C => u16_lo(self.reg_bc)
+            R8_C => u16_lo(self.reg_bc),
+            R8_H => u16_hi(self.reg_hl),
         }
     }
 
@@ -242,6 +244,7 @@ impl CPU {
             R8_F => self.reg_af = u16_set_lo(self.reg_af, v),
             R8_B => self.reg_bc = u16_set_hi(self.reg_bc, v),
             R8_C => self.reg_bc = u16_set_lo(self.reg_bc, v),
+            R8_H => self.reg_hl = u16_set_hi(self.reg_hl, v),
         }
     }
 
@@ -343,6 +346,19 @@ impl CPU {
                 self.flag_reset(F_N);
                 self.flag_reset(F_H);
                 self.flag_reset(F_C);
+            }
+            0xCB => { // ext ops
+                let op = self.mmu.rb(self.pc + 1);
+                next_pc += 1;
+                match op {
+                    0x7C => { // BIT 7, H
+                        let h = self.r8(R8_H);
+                        self.flag_set_bool(F_Z, (h & (1 << 7)) != 0);
+                        self.flag_reset(F_N);
+                        self.flag_set(F_H);
+                    }
+                    _ => fail!(fmt!("Unknown ext op : CB %02X", op as uint))
+                }
             }
             0xCD => { // CALL nn nn
                 self.reg_sp -= 2;
