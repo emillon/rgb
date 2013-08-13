@@ -204,7 +204,10 @@ enum R8 {
     R8_F,
     R8_B,
     R8_C,
-    R8_H
+    R8_D,
+    R8_E,
+    R8_H,
+    R8_L,
 }
 
 enum ALU_Op {
@@ -218,6 +221,7 @@ struct CPU {
     pc: u16,
     reg_af: u16,
     reg_bc: u16,
+    reg_de: u16,
     reg_hl: u16,
     reg_sp: u16
 }
@@ -229,6 +233,7 @@ impl CPU {
             pc: 0x0,
             reg_af : 0,
             reg_bc : 0,
+            reg_de : 0,
             reg_hl : 0,
             reg_sp : 0
         }
@@ -240,7 +245,10 @@ impl CPU {
             R8_F => u16_lo(self.reg_af),
             R8_B => u16_hi(self.reg_bc),
             R8_C => u16_lo(self.reg_bc),
+            R8_D => u16_hi(self.reg_de),
+            R8_E => u16_lo(self.reg_de),
             R8_H => u16_hi(self.reg_hl),
+            R8_L => u16_lo(self.reg_hl),
         }
     }
 
@@ -250,7 +258,10 @@ impl CPU {
             R8_F => self.reg_af = u16_set_lo(self.reg_af, v),
             R8_B => self.reg_bc = u16_set_hi(self.reg_bc, v),
             R8_C => self.reg_bc = u16_set_lo(self.reg_bc, v),
+            R8_D => self.reg_de = u16_set_hi(self.reg_de, v),
+            R8_E => self.reg_de = u16_set_lo(self.reg_de, v),
             R8_H => self.reg_hl = u16_set_hi(self.reg_hl, v),
+            R8_L => self.reg_hl = u16_set_lo(self.reg_hl, v),
         }
     }
 
@@ -398,6 +409,10 @@ impl CPU {
             }
             0x3E => { // LD A, nn
                 ld8(R8_A, None)
+            }
+            0x73 => { // LD (HL), E
+                let e = self.r8(R8_E);
+                self.mmu.wb(self.reg_hl, e);
             }
             0xAF => { // XOR A
                 alu_op(Op_XOR, Some(R8_A));
