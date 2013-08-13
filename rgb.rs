@@ -138,6 +138,12 @@ impl MMU {
             _ => { fail!("MMU::rb") }
         }
     }
+
+    fn rw(&self, addr: u16) -> u16 {
+        let lo = self.rb(addr);
+        let hi = self.rb(addr + 1);
+        (hi as u16 << 8) + lo as u16
+    }
 }
 
 struct CPU {
@@ -155,9 +161,13 @@ impl CPU {
 
     fn interp(&mut self) {
         let opcode = self.mmu.rb(self.pc);
-        let next_pc = self.pc + 1;
+        let mut next_pc = self.pc + 1;
         match opcode {
-            0x00 => { /* NOP */
+            0x00 => { // NOP
+            }
+            0xC3 => { // JP nn nn
+                let dest = self.mmu.rw (self.pc + 1);
+                next_pc = dest
             }
             _ => {
                 fail!(fmt!("Unknown opcode : %02X", opcode as uint))
