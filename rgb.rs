@@ -310,7 +310,24 @@ impl CPU {
                 Op_AND => a & y,
             };
             self.w8(R8_A, z);
-            self.r8(R8_A)
+            let a2 = self.r8(R8_A);
+            let honor_z = || {
+                self.flag_set_bool(F_Z, a2 == 0);
+            };
+            match op {
+                Op_OR | Op_XOR => {
+                    honor_z();
+                    self.flag_reset(F_N);
+                    self.flag_reset(F_H);
+                    self.flag_reset(F_C);
+                }
+                Op_AND => {
+                    honor_z();
+                    self.flag_reset(F_N);
+                    self.flag_set(F_H);
+                    self.flag_reset(F_C);
+                }
+            }
         };
         match opcode {
             0x00 => { // NOP
@@ -374,18 +391,10 @@ impl CPU {
                 self.w8(R8_A, arg_b())
             }
             0xAF => { // XOR A
-                let a2 = alu_op(Op_XOR, Some(R8_A));
-                self.flag_set_bool(F_Z, a2 == 0);
-                self.flag_reset(F_N);
-                self.flag_reset(F_H);
-                self.flag_reset(F_C);
+                alu_op(Op_XOR, Some(R8_A));
             }
             0xB0 => { // OR B
-                let a2 = alu_op(Op_OR, Some(R8_B));
-                self.flag_set_bool(F_Z, a2 == 0);
-                self.flag_reset(F_N);
-                self.flag_reset(F_H);
-                self.flag_reset(F_C);
+                alu_op(Op_OR, Some(R8_B));
             }
             0xCB => { // ext ops
                 let op = arg_b();
@@ -425,11 +434,7 @@ impl CPU {
                 self.mmu.ww(self.reg_sp, self.reg_hl);
             }
             0xE6 => { // AND nn
-                let a2 = alu_op(Op_AND, None);
-                self.flag_set_bool(F_Z, a2 == 0);
-                self.flag_reset(F_N);
-                self.flag_set(F_H);
-                self.flag_reset(F_C);
+                alu_op(Op_AND, None)
             }
             0xF3 => { // DI
                 /* TODO disable interrupts */
