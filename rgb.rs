@@ -1,6 +1,7 @@
 use std::io;
 use std::os;
 use std::str;
+use std::vec;
 
 struct ROM {
     mem: ~[u8]
@@ -76,7 +77,7 @@ impl MMU {
             oam: ~[], // FIXME
             rom: rom,
             vram: ~[], // FIXME
-            wram: ~[], // FIXME
+            wram: vec::from_elem(8192, 0 as u8),
             zram: ~[]  // FIXME
         }
     }
