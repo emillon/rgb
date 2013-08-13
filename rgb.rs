@@ -320,6 +320,11 @@ impl CPU {
                 next_pc += 2;
                 self.reg_sp = val
             }
+            0x32 => { // LDD (HL), A
+                let a = self.r8(R8_A);
+                self.mmu.wb(self.reg_hl, a);
+                self.reg_hl -= 1;
+            }
             0xAF => { // XOR A
                 let a = self.r8(R8_A);
                 self.w8(R8_A, a ^ a);
