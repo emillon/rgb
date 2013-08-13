@@ -161,11 +161,23 @@ impl MMU {
     }
 
     fn ww(&mut self, addr: u16, val: u16) {
-        let lo = (val & 0xFF) as u8;
-        let hi = ((val & 0xFF00) >> 8) as u8;
+        let lo = u16_lo(val);
+        let hi = u16_hi(val);
         self.wb(addr, lo);
         self.wb(addr, hi);
     }
+}
+
+fn u16_lo(n: u16) -> u8 {
+    (n & 0xFF) as u8
+}
+
+fn u16_hi(n: u16) -> u8 {
+    ((n & 0xFF00) >> 8) as u8
+}
+
+enum R8 {
+    R8_C
 }
 
 struct CPU {
@@ -186,6 +198,12 @@ impl CPU {
             reg_bc : 0,
             reg_hl : 0,
             reg_sp : 0
+        }
+    }
+
+    fn r8(&self, r: R8) -> u8 {
+        match r {
+            R8_C => u16_lo(self.reg_bc)
         }
     }
 
@@ -211,6 +229,9 @@ impl CPU {
             0x22 => { // LDI (HL), A
                 self.mmu.wb(self.reg_hl, self.reg_a);
                 self.reg_hl += 1;
+            }
+            0x79 => { // LD A, C
+                self.reg_a = self.r8(R8_C)
             }
             0xC3 => { // JP nn nn
                 let dest = self.mmu.rw (self.pc + 1);
