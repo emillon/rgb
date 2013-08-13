@@ -355,6 +355,17 @@ impl CPU {
                 self.reg_sp -= 2;
                 self.mmu.ww(self.reg_sp, self.reg_hl);
             }
+            0xE6 => { // AND nn
+                let val = self.mmu.rb(self.pc + 1);
+                next_pc += 1;
+                let a = self.r8(R8_A);
+                self.w8(R8_A, a & val);
+                let a2 = self.r8(R8_A);
+                self.flag_set_bool(F_Z, a2 == 0);
+                self.flag_reset(F_N);
+                self.flag_set(F_H);
+                self.flag_reset(F_C);
+            }
             0xF3 => { // DI
                 /* TODO disable interrupts */
             }
