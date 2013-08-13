@@ -274,6 +274,7 @@ impl CPU {
     fn interp(&mut self) {
         let opcode = self.mmu.rb(self.pc);
         let mut next_pc = self.pc + 1;
+        println(fmt!("PC=%04X OP=%02X", self.pc as uint, opcode as uint));
         match opcode {
             0x00 => { // NOP
             }
