@@ -200,6 +200,9 @@ impl CPU {
                 next_pc += 2;
                 self.reg_bc = val
             }
+            0x0B => { // DEC BC
+                self.reg_bc -= 1
+            }
             0x21 => { // LD HL, nn nn
                 let val = self.mmu.rw (self.pc + 1);
                 next_pc += 2;
