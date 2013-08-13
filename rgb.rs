@@ -232,14 +232,14 @@ impl CPU {
                 self.reg_bc -= 1
             }
             0x20 => { // JR NZ, nn
-                let off = self.mmu.rb (self.pc + 1);
+                let off = self.mmu.rb(self.pc + 1);
                 next_pc += 1;
                 if self.flag_is_reset(F_Z) {
                     next_pc += off as u16
                 }
             }
             0x21 => { // LD HL, nn nn
-                let val = self.mmu.rw (self.pc + 1);
+                let val = self.mmu.rw(self.pc + 1);
                 next_pc += 2;
                 self.reg_hl = val
             }
@@ -251,11 +251,15 @@ impl CPU {
                 self.reg_a = self.r8(R8_C)
             }
             0xC3 => { // JP nn nn
-                let dest = self.mmu.rw (self.pc + 1);
+                let dest = self.mmu.rw(self.pc + 1);
                 next_pc = dest
             }
+            0xC9 => { // RET
+                next_pc = self.mmu.rw(self.reg_sp);
+                self.reg_sp += 2;
+            }
             0x31 => { // LD SP, nn nn
-                let val = self.mmu.rw (self.pc + 1);
+                let val = self.mmu.rw(self.pc + 1);
                 next_pc += 2;
                 self.reg_sp = val
             }
