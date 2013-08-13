@@ -140,6 +140,29 @@ impl MMU {
     }
 }
 
+struct CPU {
+    mmu: ~MMU,
+    pc: u16
+}
+
+impl CPU {
+    fn new(mmu: ~MMU) -> CPU {
+        CPU {
+            mmu: mmu,
+            pc: 0x0100
+        }
+    }
+
+    fn interp(&self) {
+        let opcode = self.mmu.rb(self.pc);
+        match opcode {
+            _ => {
+                fail!(fmt!("Unknown opcode : %02X", opcode as uint))
+            }
+        }
+    }
+}
+
 fn main() {
     println("rgb");
     let args = os::args();
@@ -152,7 +175,10 @@ fn main() {
     let path = PosixPath(file);
     match ROM::new(path) {
         Ok (r) => {
-            r.dump_header()
+            r.dump_header();
+            let mmu = MMU::new(r);
+            let cpu = CPU::new(~mmu);
+            cpu.interp()
         }
         Err (s) => {
             println(fmt!("Cannot read %s: %s", file, s));
