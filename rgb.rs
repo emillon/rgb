@@ -219,7 +219,7 @@ impl CPU {
     fn new(mmu: ~MMU) -> CPU {
         CPU {
             mmu: mmu,
-            pc: 0x100,
+            pc: 0x0,
             reg_af : 0,
             reg_bc : 0,
             reg_hl : 0,
