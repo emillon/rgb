@@ -289,6 +289,11 @@ impl CPU {
             0x0B => { // DEC BC
                 self.reg_bc -= 1
             }
+            0x0E => { // LD C, nn
+                let val = self.mmu.rb(self.pc + 1);
+                next_pc += 1;
+                self.w8(R8_C, val)
+            }
             0x20 => { // JR NZ, nn
                 let off = self.mmu.rb(self.pc + 1);
                 next_pc += 1;
