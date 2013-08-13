@@ -33,7 +33,7 @@ impl ROM {
         sum - ck_hi - ck_lo
     }
 
-    fn dump_header (self) {
+    fn dump_header (&self) {
         let title = str::from_bytes(self.mem.slice(0x134, 0x143));
         let ct = self.mem[0x147];
         print(fmt!("Title: %s\nType : %u\n", title, ct as uint));
