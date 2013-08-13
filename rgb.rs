@@ -69,10 +69,10 @@ struct MMU {
 }
 
 impl MMU {
-    fn new(rom: ~ROM) -> MMU {
+    fn new(rom: ~ROM, bios: ~[u8]) -> MMU {
         MMU {
-            bios_is_mapped: false, // FIXME
-            bios: ~[], // FIXME
+            bios_is_mapped: true,
+            bios: bios,
             eram: ~[], // FIXME
             oam: ~[], // FIXME
             rom: rom,
@@ -303,10 +303,17 @@ fn main() {
     match ROM::new(path) {
         Ok (r) => {
             r.dump_header();
-            let mmu = MMU::new(r);
-            let mut cpu = CPU::new(~mmu);
-            loop {
-                cpu.interp()
+            match io::read_whole_file(&PosixPath("bios.dat")) {
+                Ok (bios) => {
+                    let mmu = MMU::new(r, bios);
+                    let mut cpu = CPU::new(~mmu);
+                    loop {
+                        cpu.interp()
+                    }
+                }
+                Err (s) => {
+                    println(fmt!("Cannot open bios: %s", s));
+                }
             }
         }
         Err (s) => {
