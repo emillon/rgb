@@ -287,12 +287,20 @@ impl CPU {
                 self.reg_bc = val
             }
             0x0B => { // DEC BC
-                self.reg_bc -= 1
+                self.reg_bc -= 1;
             }
             0x0E => { // LD C, nn
                 let val = self.mmu.rb(self.pc + 1);
                 next_pc += 1;
                 self.w8(R8_C, val)
+            }
+            0x0C => { // INC C
+                let c = self.r8(R8_C);
+                self.w8(R8_C, c + 1);
+                let c2 = self.r8(R8_C);
+                self.flag_set_bool(F_Z, c2 == 0);
+                self.flag_reset(F_N);
+                // TODO F_H
             }
             0x20 => { // JR NZ, nn
                 let off = self.mmu.rb(self.pc + 1);
@@ -363,7 +371,7 @@ impl CPU {
                 match op {
                     0x7C => { // BIT 7, H
                         let h = self.r8(R8_H);
-                        self.flag_set_bool(F_Z, (h & (1 << 7)) != 0);
+                        self.flag_set_bool(F_Z, (h & (1 << 7)) == 0);
                         self.flag_reset(F_N);
                         self.flag_set(F_H);
                     }
