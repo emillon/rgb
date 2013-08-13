@@ -205,6 +205,10 @@ impl CPU {
                 next_pc += 2;
                 self.reg_hl = val
             }
+            0x22 => { // LDI (HL), A
+                self.mmu.wb(self.reg_hl, self.reg_a);
+                self.reg_hl += 1;
+            }
             0xC3 => { // JP nn nn
                 let dest = self.mmu.rw (self.pc + 1);
                 next_pc = dest
