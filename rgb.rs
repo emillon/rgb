@@ -329,6 +329,13 @@ impl CPU {
                 }
             }
         };
+        let ld8 = |dest, src: Option<R8>| {
+            let val = match src {
+                Some(reg) => self.r8(reg),
+                None => arg_b()
+            };
+            self.w8(dest, val)
+        };
         match opcode {
             0x00 => { // NOP
             }
@@ -339,7 +346,7 @@ impl CPU {
                 self.reg_bc -= 1;
             }
             0x0E => { // LD C, nn
-                self.w8(R8_C, arg_b())
+                ld8(R8_C, None);
             }
             0x0C => { // INC C
                 let c = self.r8(R8_C);
@@ -368,8 +375,7 @@ impl CPU {
                 self.w8(R8_H, val)
             }
             0x79 => { // LD A, C
-                let c = self.r8(R8_C);
-                self.w8(R8_A, c);
+                ld8(R8_A, Some(R8_C))
             }
             0xC3 => { // JP nn nn
                 let dest = self.mmu.rw(self.pc + 1);
@@ -388,7 +394,7 @@ impl CPU {
                 self.reg_hl -= 1;
             }
             0x3E => { // LD A, nn
-                self.w8(R8_A, arg_b())
+                ld8(R8_A, None)
             }
             0xAF => { // XOR A
                 alu_op(Op_XOR, Some(R8_A));
