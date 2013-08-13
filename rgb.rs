@@ -382,6 +382,13 @@ impl CPU {
                     _ => fail!(fmt!("Unknown ext op : CB %02X", op as uint))
                 }
             }
+            0xCC => { // CALL Z, nn nn
+                let dest = self.mmu.rw (self.pc + 1);
+                next_pc += 2;
+                if self.flag_is_set(F_Z) {
+                    next_pc = dest
+                }
+            }
             0xCD => { // CALL nn nn
                 self.reg_sp -= 2;
                 self.mmu.ww(self.reg_sp, self.pc);
