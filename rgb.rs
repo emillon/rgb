@@ -342,6 +342,9 @@ impl CPU {
             0x01 => { // LD BC, nn nn
                 self.reg_bc = arg_w();
             }
+            0x03 => { // INC BC
+                self.reg_bc += 1;
+            }
             0x0B => { // DEC BC
                 self.reg_bc -= 1;
             }
