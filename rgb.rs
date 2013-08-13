@@ -8,7 +8,6 @@ struct ROM {
 
 impl ROM {
     fn new(path: PosixPath) -> Result<~ROM, ~str> {
-
         match io::read_whole_file(&path) {
             Ok(v) => {
                 println(fmt!("Read %u bytes", v.len()));
