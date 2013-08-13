@@ -210,6 +210,7 @@ enum R8 {
 enum ALU_Op {
     Op_OR,
     Op_XOR,
+    Op_AND,
 }
 
 struct CPU {
@@ -297,12 +298,16 @@ impl CPU {
                 next_pc = dest
             }
         };
-        let alu_op = |op: ALU_Op, reg| {
+        let alu_op = |op: ALU_Op, what: Option<R8>| {
             let a = self.r8(R8_A);
-            let r = self.r8(reg);
+            let y = match what {
+                Some(reg) => self.r8(reg),
+                None => arg_b()
+            };
             let z = match op {
-                Op_OR => a | r,
-                Op_XOR => a ^ r,
+                Op_OR  => a | y,
+                Op_XOR => a ^ y,
+                Op_AND => a & y,
             };
             self.w8(R8_A, z);
             self.r8(R8_A)
@@ -369,14 +374,14 @@ impl CPU {
                 self.w8(R8_A, arg_b())
             }
             0xAF => { // XOR A
-                let a2 = alu_op(Op_XOR, R8_A);
+                let a2 = alu_op(Op_XOR, Some(R8_A));
                 self.flag_set_bool(F_Z, a2 == 0);
                 self.flag_reset(F_N);
                 self.flag_reset(F_H);
                 self.flag_reset(F_C);
             }
             0xB0 => { // OR B
-                let a2 = alu_op(Op_OR, R8_B);
+                let a2 = alu_op(Op_OR, Some(R8_B));
                 self.flag_set_bool(F_Z, a2 == 0);
                 self.flag_reset(F_N);
                 self.flag_reset(F_H);
@@ -420,9 +425,7 @@ impl CPU {
                 self.mmu.ww(self.reg_sp, self.reg_hl);
             }
             0xE6 => { // AND nn
-                let a = self.r8(R8_A);
-                self.w8(R8_A, a & arg_b());
-                let a2 = self.r8(R8_A);
+                let a2 = alu_op(Op_AND, None);
                 self.flag_set_bool(F_Z, a2 == 0);
                 self.flag_reset(F_N);
                 self.flag_set(F_H);
