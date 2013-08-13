@@ -170,6 +170,7 @@ fn u16_hi(n: u16) -> u8 {
 }
 
 enum Flag {
+    F_C,
     F_Z
 }
 
@@ -206,8 +207,12 @@ impl CPU {
         }
     }
 
+    fn flag_is_set(&self, f: Flag) -> bool {
+        false // TODO
+    }
+
     fn flag_is_reset(&self, f: Flag) -> bool {
-        true // TODO
+        !self.flag_is_set(f)
     }
 
     fn interp(&mut self) {
@@ -262,11 +267,18 @@ impl CPU {
             0xB0 => { // OR B
                 self.reg_a |= self.r8(R8_B)
             }
-            0xCD => { // CALL nn
+            0xCD => { // CALL nn nn
                 self.reg_sp -= 2;
                 self.mmu.ww(self.reg_sp, self.pc);
                 let dest = self.mmu.rw (self.pc + 1);
                 next_pc = dest
+            }
+            0xDC => { // CALL C, nn nn
+                let dest = self.mmu.rw (self.pc + 1);
+                next_pc += 2;
+                if self.flag_is_set(F_C) {
+                    next_pc = dest
+                }
             }
             0xE5 => { // PUSH HL
                 self.reg_sp -= 2;
