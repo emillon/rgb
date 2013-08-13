@@ -176,6 +176,10 @@ fn u16_hi(n: u16) -> u8 {
     ((n & 0xFF00) >> 8) as u8
 }
 
+enum Flag {
+    F_Z
+}
+
 enum R8 {
     R8_B,
     R8_C
@@ -209,6 +213,10 @@ impl CPU {
         }
     }
 
+    fn flag_is_reset(&self, f: Flag) -> bool {
+        true // TODO
+    }
+
     fn interp(&mut self) {
         let opcode = self.mmu.rb(self.pc);
         let mut next_pc = self.pc + 1;
@@ -222,6 +230,13 @@ impl CPU {
             }
             0x0B => { // DEC BC
                 self.reg_bc -= 1
+            }
+            0x20 => { // JR NZ, nn
+                let off = self.mmu.rb (self.pc + 1);
+                next_pc += 1;
+                if self.flag_is_reset(F_Z) {
+                    next_pc += off as u16
+                }
             }
             0x21 => { // LD HL, nn nn
                 let val = self.mmu.rw (self.pc + 1);
