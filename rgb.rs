@@ -150,7 +150,7 @@ impl MMU {
     fn rw(&mut self, addr: u16) -> u16 {
         let lo = self.rb(addr);
         let hi = self.rb(addr + 1);
-        (hi as u16 << 8) + lo as u16
+        u16_make(hi, lo)
     }
 
     fn ww(&mut self, addr: u16, val: u16) {
@@ -169,12 +169,39 @@ fn u16_hi(n: u16) -> u8 {
     ((n & 0xFF00) >> 8) as u8
 }
 
+fn u16_make(hi: u8, lo: u8) -> u16 {
+    (hi as u16 << 8) + lo as u16
+}
+
+fn u16_set_hi(w: u16, b: u8) -> u16 {
+    u16_make(b, u16_lo(w))
+}
+
+fn u16_set_lo(w: u16, b: u8) -> u16 {
+    u16_make(u16_hi(w), b)
+}
+
 enum Flag {
-    F_C,
-    F_Z
+    F_Z,
+    F_N,
+    F_H,
+    F_C
+}
+
+impl Flag {
+    fn mask (&self) -> u8 {
+        match *self {
+            F_Z => 0x80,
+            F_N => 0x40,
+            F_H => 0x20,
+            F_C => 0x10
+        }
+    }
 }
 
 enum R8 {
+    R8_A,
+    R8_F,
     R8_B,
     R8_C
 }
@@ -182,7 +209,7 @@ enum R8 {
 struct CPU {
     mmu: ~MMU,
     pc: u16,
-    reg_a: u8,
+    reg_af: u16,
     reg_bc: u16,
     reg_hl: u16,
     reg_sp: u16
@@ -193,7 +220,7 @@ impl CPU {
         CPU {
             mmu: mmu,
             pc: 0x100,
-            reg_a : 0,
+            reg_af : 0,
             reg_bc : 0,
             reg_hl : 0,
             reg_sp : 0
@@ -202,17 +229,46 @@ impl CPU {
 
     fn r8(&self, r: R8) -> u8 {
         match r {
+            R8_A => u16_hi(self.reg_af),
+            R8_F => u16_lo(self.reg_af),
             R8_B => u16_hi(self.reg_bc),
             R8_C => u16_lo(self.reg_bc)
         }
     }
 
+    fn w8(&mut self, r: R8, v: u8) {
+        match r {
+            R8_A => self.reg_af = u16_set_hi(self.reg_af, v),
+            R8_F => self.reg_af = u16_set_lo(self.reg_af, v),
+            R8_B => self.reg_bc = u16_set_hi(self.reg_bc, v),
+            R8_C => self.reg_bc = u16_set_lo(self.reg_bc, v),
+        }
+    }
+
     fn flag_is_set(&self, f: Flag) -> bool {
-        false // TODO
+        (self.r8(R8_F) & f.mask()) != 0
     }
 
     fn flag_is_reset(&self, f: Flag) -> bool {
         !self.flag_is_set(f)
+    }
+
+    fn flag_set_bool(&mut self, f: Flag, v: bool) {
+        if v {
+            self.flag_set(f)
+        } else {
+            self.flag_reset(f)
+        }
+    }
+
+    fn flag_set(&mut self, f: Flag) {
+        let flags = self.r8(R8_F);
+        self.w8(R8_F, flags | f.mask())
+    }
+
+    fn flag_reset(&mut self, f: Flag) {
+        let flags = self.r8(R8_F);
+        self.w8(R8_F, flags & (! f.mask()))
     }
 
     fn interp(&mut self) {
@@ -242,11 +298,13 @@ impl CPU {
                 self.reg_hl = val
             }
             0x22 => { // LDI (HL), A
-                self.mmu.wb(self.reg_hl, self.reg_a);
+                let a = self.r8(R8_A);
+                self.mmu.wb(self.reg_hl, a);
                 self.reg_hl += 1;
             }
             0x79 => { // LD A, C
-                self.reg_a = self.r8(R8_C)
+                let c = self.r8(R8_C);
+                self.w8(R8_A, c);
             }
             0xC3 => { // JP nn nn
                 let dest = self.mmu.rw(self.pc + 1);
@@ -262,10 +320,23 @@ impl CPU {
                 self.reg_sp = val
             }
             0xAF => { // XOR A
-                self.reg_a ^= self.reg_a
+                let a = self.r8(R8_A);
+                self.w8(R8_A, a ^ a);
+                let a2 = self.r8(R8_A);
+                self.flag_set_bool(F_Z, a2 == 0);
+                self.flag_reset(F_N);
+                self.flag_reset(F_H);
+                self.flag_reset(F_C);
             }
             0xB0 => { // OR B
-                self.reg_a |= self.r8(R8_B)
+                let a = self.r8(R8_A);
+                let b = self.r8(R8_B);
+                self.w8(R8_A, a | b);
+                let a2 = self.r8(R8_A);
+                self.flag_set_bool(F_Z, a2 == 0);
+                self.flag_reset(F_N);
+                self.flag_reset(F_H);
+                self.flag_reset(F_C);
             }
             0xCD => { // CALL nn nn
                 self.reg_sp -= 2;
