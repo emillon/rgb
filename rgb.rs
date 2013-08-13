@@ -171,6 +171,7 @@ impl MMU {
 struct CPU {
     mmu: ~MMU,
     pc: u16,
+    reg_a: u8,
     reg_bc: u16,
     reg_hl: u16,
     reg_sp: u16
@@ -181,6 +182,7 @@ impl CPU {
         CPU {
             mmu: mmu,
             pc: 0,
+            reg_a : 0,
             reg_bc : 0,
             reg_hl : 0,
             reg_sp : 0
@@ -211,6 +213,9 @@ impl CPU {
                 let val = self.mmu.rw (self.pc + 1);
                 next_pc += 2;
                 self.reg_sp = val
+            }
+            0xAF => { // XOR A
+                self.reg_a = self.reg_a ^ self.reg_a
             }
             0xCD => { // CALL nn
                 self.reg_sp -= 2;
