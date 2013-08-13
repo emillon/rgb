@@ -367,6 +367,14 @@ impl CPU {
             0x0B => { // DEC BC
                 self.reg_bc -= 1;
             }
+            0x0D => { // DEC C
+                let c = self.r8(R8_C);
+                self.w8(R8_C, c-1);
+                let c2 = self.r8(R8_C);
+                self.flag_set_bool(F_Z, c2 == 0);
+                self.flag_set(F_N)
+                // TODO F_H
+            }
             0x0E => { // LD C, nn
                 ld8(R8_C, None);
             }
