@@ -177,6 +177,7 @@ fn u16_hi(n: u16) -> u8 {
 }
 
 enum R8 {
+    R8_B,
     R8_C
 }
 
@@ -203,6 +204,7 @@ impl CPU {
 
     fn r8(&self, r: R8) -> u8 {
         match r {
+            R8_B => u16_hi(self.reg_bc),
             R8_C => u16_lo(self.reg_bc)
         }
     }
@@ -243,7 +245,10 @@ impl CPU {
                 self.reg_sp = val
             }
             0xAF => { // XOR A
-                self.reg_a = self.reg_a ^ self.reg_a
+                self.reg_a ^= self.reg_a
+            }
+            0xB0 => { // OR B
+                self.reg_a |= self.r8(R8_B)
             }
             0xCD => { // CALL nn
                 self.reg_sp -= 2;
