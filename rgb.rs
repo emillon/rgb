@@ -319,6 +319,10 @@ impl CPU {
                 self.mmu.wb(self.reg_hl, a);
                 self.reg_hl += 1;
             }
+            0x66 => { // LD H, (HL)
+                let val = self.mmu.rb(self.reg_hl);
+                self.w8(R8_H, val)
+            }
             0x79 => { // LD A, C
                 let c = self.r8(R8_C);
                 self.w8(R8_A, c);
