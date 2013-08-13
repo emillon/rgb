@@ -8,15 +8,8 @@ struct ROM {
 }
 
 impl ROM {
-    fn new(path: PosixPath) -> Result<~ROM, ~str> {
-        match io::read_whole_file(&path) {
-            Ok(v) => {
-                println(fmt!("Read %u bytes", v.len()));
-                Ok(~ROM { mem: v })
-            }
-            Err(s) => { Err (s) }
-        }
-
+    fn new(rom_data: ~[u8]) -> ROM {
+        ROM { mem: rom_data }
     }
 
     fn read_word_be(&self, offset: u16) -> u16 {
@@ -299,25 +292,13 @@ fn main() {
         return
     }
     let file = os::args()[1];
-    let path = PosixPath(file);
-    match ROM::new(path) {
-        Ok (r) => {
-            r.dump_header();
-            match io::read_whole_file(&PosixPath("bios.dat")) {
-                Ok (bios) => {
-                    let mmu = MMU::new(r, bios);
-                    let mut cpu = CPU::new(~mmu);
-                    loop {
-                        cpu.interp()
-                    }
-                }
-                Err (s) => {
-                    println(fmt!("Cannot open bios: %s", s));
-                }
-            }
-        }
-        Err (s) => {
-            println(fmt!("Cannot read %s: %s", file, s));
-        }
+    let rom_data = io::read_whole_file(&PosixPath(file)).expect(fmt!("Cannot read %s", file));
+    let rom = ~ROM::new(rom_data);
+    rom.dump_header();
+    let bios = io::read_whole_file(&PosixPath("bios.dat")).expect("Cannot open bios");
+    let mmu = MMU::new(rom, bios);
+    let mut cpu = CPU::new(~mmu);
+    loop {
+        cpu.interp()
     }
 }
