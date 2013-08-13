@@ -24,23 +24,18 @@ impl ROM {
     }
 
     fn hdr_checksum(&self) -> u8 {
-        let start: u16 = 0x134;
-        let end: u16 = 0x14C;
+        let (start, end) = (0x134, 0x14C);
         let mut r = (start - end - 1) as u8;
-        let mut i = start;
-        while i <= end {
-            r += self.mem[i];
-            i += 1;
-        };
+        for v in self.mem.slice(start, end).iter() {
+            r += *v
+        }
         r
     }
 
     fn rom_checksum(&self) -> u16 {
         let mut r: u16 = 0;
-        let mut i = 0;
-        while i < self.mem.len() {
-            r += self.mem[i] as u16;
-            i += 1;
+        for v in self.mem.iter() {
+            r += *v as u16;
         }
         r -= self.mem[0x014E] as u16;
         r -= self.mem[0x014F] as u16;
