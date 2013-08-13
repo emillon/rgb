@@ -351,6 +351,9 @@ impl CPU {
                     next_pc = dest
                 }
             }
+            0xDD => {
+                fail!(fmt!("Bad opcode : %02X", opcode as uint))
+            }
             0xE5 => { // PUSH HL
                 self.reg_sp -= 2;
                 self.mmu.ww(self.reg_sp, self.reg_hl);
