@@ -218,6 +218,10 @@ impl CPU {
                 let dest = self.mmu.rw (self.pc + 1);
                 next_pc = dest
             }
+            0xE5 => { // PUSH HL
+                self.reg_sp -= 2;
+                self.mmu.ww(self.reg_sp, self.reg_hl);
+            }
             0xF3 => { // DI
                 /* TODO disable interrupts */
             }
