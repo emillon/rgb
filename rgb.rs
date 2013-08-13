@@ -69,7 +69,7 @@ impl MMU {
             eram: ~[], // FIXME
             oam: ~[], // FIXME
             rom: rom,
-            vram: ~[], // FIXME
+            vram: vec::from_elem(8192, 0 as u8),
             wram: vec::from_elem(8192, 0 as u8),
             zram: ~[]  // FIXME
         }
