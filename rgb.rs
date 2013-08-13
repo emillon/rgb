@@ -278,21 +278,25 @@ impl CPU {
         let opcode = self.mmu.rb(self.pc);
         let mut next_pc = self.pc + 1;
         println(fmt!("PC=%04X OP=%02X", self.pc as uint, opcode as uint));
+        let arg_b = || {
+            next_pc += 1;
+            self.mmu.rb(self.pc + 1)
+        };
+        let arg_w = || {
+            next_pc += 2;
+            self.mmu.rw(self.pc + 1)
+        };
         match opcode {
             0x00 => { // NOP
             }
             0x01 => { // LD BC, nn nn
-                let val = self.mmu.rw (self.pc + 1);
-                next_pc += 2;
-                self.reg_bc = val
+                self.reg_bc = arg_w();
             }
             0x0B => { // DEC BC
                 self.reg_bc -= 1;
             }
             0x0E => { // LD C, nn
-                let val = self.mmu.rb(self.pc + 1);
-                next_pc += 1;
-                self.w8(R8_C, val)
+                self.w8(R8_C, arg_b())
             }
             0x0C => { // INC C
                 let c = self.r8(R8_C);
@@ -303,16 +307,13 @@ impl CPU {
                 // TODO F_H
             }
             0x20 => { // JR NZ, nn
-                let off = self.mmu.rb(self.pc + 1);
-                next_pc += 1;
+                let off = arg_b();
                 if self.flag_is_reset(F_Z) {
                     next_pc += off as u16
                 }
             }
             0x21 => { // LD HL, nn nn
-                let val = self.mmu.rw(self.pc + 1);
-                next_pc += 2;
-                self.reg_hl = val
+                self.reg_hl = arg_w()
             }
             0x22 => { // LDI (HL), A
                 let a = self.r8(R8_A);
@@ -336,9 +337,7 @@ impl CPU {
                 self.reg_sp += 2;
             }
             0x31 => { // LD SP, nn nn
-                let val = self.mmu.rw(self.pc + 1);
-                next_pc += 2;
-                self.reg_sp = val
+                self.reg_sp = arg_w()
             }
             0x32 => { // LDD (HL), A
                 let a = self.r8(R8_A);
@@ -346,9 +345,7 @@ impl CPU {
                 self.reg_hl -= 1;
             }
             0x3E => { // LD A, nn
-                let val = self.mmu.rb(self.pc + 1);
-                next_pc += 1;
-                self.w8(R8_A, val)
+                self.w8(R8_A, arg_b())
             }
             0xAF => { // XOR A
                 let a = self.r8(R8_A);
@@ -370,8 +367,7 @@ impl CPU {
                 self.flag_reset(F_C);
             }
             0xCB => { // ext ops
-                let op = self.mmu.rb(self.pc + 1);
-                next_pc += 1;
+                let op = arg_b();
                 match op {
                     0x7C => { // BIT 7, H
                         let h = self.r8(R8_H);
@@ -383,8 +379,7 @@ impl CPU {
                 }
             }
             0xCC => { // CALL Z, nn nn
-                let dest = self.mmu.rw (self.pc + 1);
-                next_pc += 2;
+                let dest = arg_w();
                 if self.flag_is_set(F_Z) {
                     next_pc = dest
                 }
@@ -392,12 +387,11 @@ impl CPU {
             0xCD => { // CALL nn nn
                 self.reg_sp -= 2;
                 self.mmu.ww(self.reg_sp, self.pc);
-                let dest = self.mmu.rw (self.pc + 1);
+                let dest = arg_w(); // FIXME
                 next_pc = dest
             }
             0xDC => { // CALL C, nn nn
-                let dest = self.mmu.rw (self.pc + 1);
-                next_pc += 2;
+                let dest = arg_w();
                 if self.flag_is_set(F_C) {
                     next_pc = dest
                 }
@@ -416,10 +410,8 @@ impl CPU {
                 self.mmu.ww(self.reg_sp, self.reg_hl);
             }
             0xE6 => { // AND nn
-                let val = self.mmu.rb(self.pc + 1);
-                next_pc += 1;
                 let a = self.r8(R8_A);
-                self.w8(R8_A, a & val);
+                self.w8(R8_A, a & arg_b());
                 let a2 = self.r8(R8_A);
                 self.flag_set_bool(F_Z, a2 == 0);
                 self.flag_reset(F_N);
