@@ -171,6 +171,7 @@ impl MMU {
 struct CPU {
     mmu: ~MMU,
     pc: u16,
+    reg_hl: u16,
     reg_sp: u16
 }
 
@@ -179,6 +180,7 @@ impl CPU {
         CPU {
             mmu: mmu,
             pc: 0,
+            reg_hl : 0,
             reg_sp : 0
         }
     }
@@ -188,6 +190,11 @@ impl CPU {
         let mut next_pc = self.pc + 1;
         match opcode {
             0x00 => { // NOP
+            }
+            0x21 => { // LD HL, nn nn
+                let val = self.mmu.rw (self.pc + 1);
+                next_pc += 2;
+                self.reg_hl = val
             }
             0xC3 => { // JP nn nn
                 let dest = self.mmu.rw (self.pc + 1);
