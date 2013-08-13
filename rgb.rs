@@ -153,13 +153,17 @@ impl CPU {
         }
     }
 
-    fn interp(&self) {
+    fn interp(&mut self) {
         let opcode = self.mmu.rb(self.pc);
+        let next_pc = self.pc + 1;
         match opcode {
+            0x00 => { /* NOP */
+            }
             _ => {
                 fail!(fmt!("Unknown opcode : %02X", opcode as uint))
             }
         }
+        self.pc = next_pc
     }
 }
 
@@ -177,8 +181,10 @@ fn main() {
         Ok (r) => {
             r.dump_header();
             let mmu = MMU::new(r);
-            let cpu = CPU::new(~mmu);
-            cpu.interp()
+            let mut cpu = CPU::new(~mmu);
+            loop {
+                cpu.interp()
+            }
         }
         Err (s) => {
             println(fmt!("Cannot read %s: %s", file, s));
