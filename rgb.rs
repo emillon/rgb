@@ -364,6 +364,10 @@ impl CPU {
             0x03 => { // INC BC
                 self.reg_bc += 1;
             }
+            0x08 => { // LD (nn nn), SP
+                let addr = arg_w();
+                self.mmu.ww(addr, self.reg_sp);
+            }
             0x0B => { // DEC BC
                 self.reg_bc -= 1;
             }
