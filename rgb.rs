@@ -286,6 +286,12 @@ impl CPU {
             next_pc += 2;
             self.mmu.rw(self.pc + 1)
         };
+        let call_cond = |flag| {
+            let dest = arg_w();
+            if self.flag_is_set(flag) {
+                next_pc = dest
+            }
+        };
         match opcode {
             0x00 => { // NOP
             }
@@ -379,10 +385,7 @@ impl CPU {
                 }
             }
             0xCC => { // CALL Z, nn nn
-                let dest = arg_w();
-                if self.flag_is_set(F_Z) {
-                    next_pc = dest
-                }
+                call_cond(F_Z)
             }
             0xCD => { // CALL nn nn
                 self.reg_sp -= 2;
@@ -391,10 +394,7 @@ impl CPU {
                 next_pc = dest
             }
             0xDC => { // CALL C, nn nn
-                let dest = arg_w();
-                if self.flag_is_set(F_C) {
-                    next_pc = dest
-                }
+                call_cond(F_C)
             }
             0xDD => {
                 fail!(fmt!("Bad opcode : %02X", opcode as uint))
