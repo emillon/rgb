@@ -81,33 +81,33 @@ impl MMU {
         }
     }
 
-    fn vmem<'a> (&'a self, addr: u16) -> Option<&'a u8> {
+    fn vmem<'a> (&'a mut self, addr: u16) -> Option<&'a mut u8> {
         match addr & 0xF000 {
             0x0000 => {
 	        if (self.bios_is_mapped) {
 		    if(addr < 0x0100) {
-		        return Some (&self.bios[addr]);
+		        return Some (&mut self.bios[addr]);
                     }
                     /* TODO
 		    else if(Z80._r.pc == 0x0100)
 		        MMU._inbios = 0;
                     */
 		}
-		Some (&self.rom.mem[addr])
+		Some (&mut self.rom.mem[addr])
             }
               0x1000 | 0x2000 | 0x3000 // ROM0 (rest)
             | 0x4000 | 0x5000 | 0x6000 | 0x7000 // ROM1
             => {
-                Some (&self.rom.mem[addr])
+                Some (&mut self.rom.mem[addr])
             }
             0x8000 | 0x9000 => {
-                Some (&self.vram[addr & 0x1fff])
+                Some (&mut self.vram[addr & 0x1fff])
             }
             0xA000 | 0xB000 => {
-                Some (&self.eram[addr & 0x1fff])
+                Some (&mut self.eram[addr & 0x1fff])
             }
             0xC000 | 0xD000 | 0xE000 => {
-                Some (&self.wram[addr & 0x1fff])
+                Some (&mut self.wram[addr & 0x1fff])
             }
             0xF000 => {
                 match addr & 0x1F00 {
@@ -115,18 +115,18 @@ impl MMU {
                     | 0x400 | 0x500 | 0x600 | 0x700
                     | 0x800 | 0x900 | 0xA00 | 0xB00
 		    | 0xC00 | 0xD00 => {
-                        Some (&self.wram[addr & 0x1fff])
+                        Some (&mut self.wram[addr & 0x1fff])
                     }
                     0xE00 => {
                         if(addr < 0xFEA0) {
-			    Some (&self.oam[addr & 0xFF])
+			    Some (&mut self.oam[addr & 0xFF])
                         } else {
 			    None
                         }
                     }
                     0xF00 => {
                         if(addr >= 0xFF80) {
-			    Some (&self.zram[addr & 0x7F])
+			    Some (&mut self.zram[addr & 0x7F])
 			} else {
 			    // I/O
 			    None
@@ -139,24 +139,27 @@ impl MMU {
         }
     }
 
-    fn rb(&self, addr: u16) -> u8 {
+    fn rb(&mut self, addr: u16) -> u8 {
         match self.vmem(addr) {
             Some (p) => *p,
             None => 0
         }
     }
 
-    fn wb(&self, addr: u16, val: u8) {
-        fail!("MMU:wb")
+    fn wb(&mut self, addr: u16, val: u8) {
+        match self.vmem(addr) {
+            Some (p) => *p = val,
+            None => {}
+        }
     }
 
-    fn rw(&self, addr: u16) -> u16 {
+    fn rw(&mut self, addr: u16) -> u16 {
         let lo = self.rb(addr);
         let hi = self.rb(addr + 1);
         (hi as u16 << 8) + lo as u16
     }
 
-    fn ww(&self, addr: u16, val: u16) {
+    fn ww(&mut self, addr: u16, val: u16) {
         let lo = (val & 0xFF) as u8;
         let hi = ((val & 0xFF00) >> 8) as u8;
         self.wb(addr, lo);
