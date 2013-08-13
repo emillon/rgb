@@ -333,6 +333,11 @@ impl CPU {
                 self.mmu.wb(self.reg_hl, a);
                 self.reg_hl -= 1;
             }
+            0x3E => { // LD A, nn
+                let val = self.mmu.rb(self.pc + 1);
+                next_pc += 1;
+                self.w8(R8_A, val)
+            }
             0xAF => { // XOR A
                 let a = self.r8(R8_A);
                 self.w8(R8_A, a ^ a);
