@@ -139,23 +139,36 @@ impl MMU {
         }
     }
 
+    fn wb(&self, addr: u16, val: u8) {
+        fail!("MMU:wb")
+    }
+
     fn rw(&self, addr: u16) -> u16 {
         let lo = self.rb(addr);
         let hi = self.rb(addr + 1);
         (hi as u16 << 8) + lo as u16
     }
+
+    fn ww(&self, addr: u16, val: u16) {
+        let lo = (val & 0xFF) as u8;
+        let hi = ((val & 0xFF00) >> 8) as u8;
+        self.wb(addr, lo);
+        self.wb(addr, hi);
+    }
 }
 
 struct CPU {
     mmu: ~MMU,
-    pc: u16
+    pc: u16,
+    reg_sp: u16
 }
 
 impl CPU {
     fn new(mmu: ~MMU) -> CPU {
         CPU {
             mmu: mmu,
-            pc: 0x0100
+            pc: 0x0100,
+            reg_sp : 0 // FIXME
         }
     }
 
@@ -168,6 +181,20 @@ impl CPU {
             0xC3 => { // JP nn nn
                 let dest = self.mmu.rw (self.pc + 1);
                 next_pc = dest
+            }
+            0x31 => { // LD SP, nn nn
+                let val = self.mmu.rw (self.pc + 1);
+                next_pc += 2;
+                self.reg_sp = val
+            }
+            0xCD => { // CALL nn
+                self.reg_sp -= 2;
+                self.mmu.ww(self.reg_sp, self.pc);
+                let dest = self.mmu.rw (self.pc + 1);
+                next_pc = dest
+            }
+            0xF3 => { // DI
+                /* TODO disable interrupts */
             }
             _ => {
                 fail!(fmt!("Unknown opcode : %02X", opcode as uint))
