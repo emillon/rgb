@@ -71,8 +71,8 @@ struct MMU {
 impl MMU {
     fn new(rom: ~ROM) -> MMU {
         MMU {
-            bios_is_mapped: true,
-            bios: ~[0xC3, 0x00, 0x01], // FIXME: just jump into the cartridge
+            bios_is_mapped: false, // FIXME
+            bios: ~[], // FIXME
             eram: ~[], // FIXME
             oam: ~[], // FIXME
             rom: rom,
@@ -198,7 +198,7 @@ impl CPU {
     fn new(mmu: ~MMU) -> CPU {
         CPU {
             mmu: mmu,
-            pc: 0,
+            pc: 0x100,
             reg_a : 0,
             reg_bc : 0,
             reg_hl : 0,
