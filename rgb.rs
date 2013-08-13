@@ -23,22 +23,14 @@ impl ROM {
     }
 
     fn hdr_checksum(&self) -> u8 {
-        let (start, end) = (0x134, 0x14C);
-        let mut r = (start - end - 1) as u8;
-        for v in self.mem.slice(start, end).iter() {
-            r += *v
-        }
-        r
+        self.mem.slice(0x134, 0x14C).iter().fold(-1, |n, &v| n + v - 1)
     }
 
     fn rom_checksum(&self) -> u16 {
-        let mut r: u16 = 0;
-        for v in self.mem.iter() {
-            r += *v as u16;
-        }
-        r -= self.mem[0x014E] as u16;
-        r -= self.mem[0x014F] as u16;
-        r
+        let sum: u16 = self.mem.iter().fold(0, |n, &v|  n + v as u16);
+        let ck_hi = self.mem[0x014E] as u16;
+        let ck_lo = self.mem[0x014F] as u16;
+        sum - ck_hi - ck_lo
     }
 
     fn dump_header (self) {
