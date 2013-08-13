@@ -214,6 +214,7 @@ enum ALU_Op {
     Op_OR,
     Op_XOR,
     Op_AND,
+    Op_ADD,
 }
 
 struct CPU {
@@ -319,6 +320,7 @@ impl CPU {
                 Op_OR  => a | y,
                 Op_XOR => a ^ y,
                 Op_AND => a & y,
+                Op_ADD => a + y,
             };
             self.w8(R8_A, z);
             let a2 = self.r8(R8_A);
@@ -337,6 +339,12 @@ impl CPU {
                     self.flag_reset(F_N);
                     self.flag_set(F_H);
                     self.flag_reset(F_C);
+                }
+                Op_ADD => {
+                    honor_z();
+                    self.flag_reset(F_N);
+                    // TODO honor h
+                    // TODO honor c
                 }
             }
         };
@@ -390,6 +398,9 @@ impl CPU {
             }
             0x79 => { // LD A, C
                 ld8(R8_A, Some(R8_C))
+            }
+            0x83 => { // ADD A, E
+                alu_op(Op_ADD, Some(R8_E))
             }
             0xC3 => { // JP nn nn
                 let dest = self.mmu.rw(self.pc + 1);
