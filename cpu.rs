@@ -256,6 +256,9 @@ impl CPU {
                 self.flag_reset(F_H);
                 self.flag_set_bool(F_C, lsb != 0);
             }
+            0x11 => { // LD DE, nn nn
+                self.reg_de = arg_w();
+            }
             0x12 => { // LD (DE), A
                 ld8_ind(self.reg_de, R8_A)
             }
