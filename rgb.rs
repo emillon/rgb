@@ -540,6 +540,9 @@ impl CPU {
             0xE6 => { // AND nn
                 alu_op(Op_AND, None)
             }
+            0xF6 => { // OR nn
+                alu_op(Op_OR, None)
+            }
             0xFE => { // CP A, nn
                 let n = arg_b();
                 let a = self.r8(R8_A);
