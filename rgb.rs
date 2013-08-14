@@ -374,6 +374,9 @@ impl CPU {
             self.reg_sp += 2;
             val
         };
+        let ret = || {
+            next_pc = pop_w();
+        };
         match opcode {
             0x00 => { // NOP
             }
@@ -436,12 +439,17 @@ impl CPU {
             0x83 => { // ADD A, E
                 alu_op(Op_ADD, Some(R8_E))
             }
+            0xC0 => { // RET NZ
+                if self.flag_is_reset(F_Z) {
+                    ret()
+                }
+            }
             0xC3 => { // JP nn nn
                 let dest = self.mmu.rw(self.pc + 1);
                 next_pc = dest
             }
             0xC9 => { // RET
-                next_pc = pop_w();
+                ret()
             }
             0x31 => { // LD SP, nn nn
                 self.reg_sp = arg_w()
