@@ -321,7 +321,8 @@ impl CPU {
                 next_pc = dest
             }
         };
-        let jr_cond = |flag, exp_value, offset: u8| {
+        let jr_cond = |flag, exp_value| {
+            let offset = arg_b();
             if self.flag_is_set(flag) == exp_value {
                 next_pc += offset as u16
             }
@@ -428,7 +429,7 @@ impl CPU {
                 ld8_ind(self.reg_de, R8_A)
             }
             0x20 => { // JR NZ, nn
-                jr_cond(F_Z, false, arg_b());
+                jr_cond(F_Z, false)
             }
             0x21 => { // LD HL, nn nn
                 self.reg_hl = arg_w()
@@ -441,6 +442,9 @@ impl CPU {
             0x2E => { // LD L, nn
                 ld8(R8_L, A_Immediate)
             }
+            0x30 => { // JR NC, nn
+                jr_cond(F_C, false)
+            }
             0x31 => { // LD SP, nn nn
                 self.reg_sp = arg_w()
             }
@@ -450,7 +454,7 @@ impl CPU {
                 self.reg_hl -= 1;
             }
             0x38 => { // JR C, nn
-                jr_cond(F_C, true, arg_b());
+                jr_cond(F_C, true)
             }
             0x3E => { // LD A, nn
                 ld8(R8_A, A_Immediate)
