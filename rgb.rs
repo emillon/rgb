@@ -82,58 +82,27 @@ impl MMU {
     }
 
     fn vmem<'a> (&'a mut self, addr: u16) -> Option<&'a mut u8> {
-        match addr & 0xF000 {
-            0x0000 => {
-	        if (self.bios_is_mapped) {
-		    if(addr < 0x0100) {
-		        return Some (&mut self.bios[addr]);
-                    }
-		}
-		Some (&mut self.rom.mem[addr])
-            }
-              0x1000 | 0x2000 | 0x3000 // ROM0 (rest)
-            | 0x4000 | 0x5000 | 0x6000 | 0x7000 // ROM1
-            => {
-                Some (&mut self.rom.mem[addr])
-            }
-            0x8000 | 0x9000 => {
-                Some (&mut self.vram[addr & 0x1fff])
-            }
-            0xA000 | 0xB000 => {
-                Some (&mut self.eram[addr & 0x1fff])
-            }
-            0xC000 | 0xD000 | 0xE000 => {
-                Some (&mut self.wram[addr & 0x1fff])
-            }
-            0xF000 => {
-                match addr & 0x0F00 {
-                      0x000 | 0x100 | 0x200 | 0x300
-                    | 0x400 | 0x500 | 0x600 | 0x700
-                    | 0x800 | 0x900 | 0xA00 | 0xB00
-		    | 0xC00 | 0xD00 => {
-                        Some (&mut self.wram[addr & 0x1fff])
-                    }
-                    0xE00 => {
-                        if(addr < 0xFEA0) {
-			    Some (&mut self.oam[addr & 0xFF])
-                        } else {
-			    None
-                        }
-                    }
-                    0xF00 => {
-                        if addr == 0xFFFF {
-                            Some (&mut self.ie)
-                        } else if(addr >= 0xFF80) {
-			    Some (&mut self.zram[addr & 0x7F])
-			} else {
-			    // I/O
-			    None
-			}
-                    }
-                    _ => { fail!("MMU::rb") }
+        match addr {
+            0x0000..0x00FF => {
+                if self.bios_is_mapped {
+                    Some (&mut self.bios[addr])
+                } else {
+                    Some (&mut self.rom.mem[addr])
                 }
             }
-            _ => { fail!("MMU::rb") }
+            0x0100..0x7FFF => { Some (&mut self.rom.mem[addr]) }
+            0x8000..0x9FFF => { Some (&mut self.vram[addr & 0x1fff]) }
+            0xA000..0xBFFF => { Some (&mut self.eram[addr & 0x1fff]) }
+            0xC000..0xFDFF => { Some (&mut self.wram[addr & 0x1fff]) }
+            0xFE00..0xFE9F => { Some (&mut self.oam[addr & 0xFF]) }
+            0xFEA0..0xFEFF => { None }
+            0xFF00..0xFF7F => { None } // I/O TODO
+            0xFF80..0xFFFE => { Some (&mut self.zram[addr & 0x7F]) }
+            0xFFFF         => { Some (&mut self.ie) }
+            _ => {
+                println(fmt!("%04X", addr as uint));
+                fail!("MMU::rb")
+            }
         }
     }
 
