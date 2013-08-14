@@ -88,10 +88,6 @@ impl MMU {
 		    if(addr < 0x0100) {
 		        return Some (&mut self.bios[addr]);
                     }
-                    /* TODO
-		    else if(Z80._r.pc == 0x0100)
-		        MMU._inbios = 0;
-                    */
 		}
 		Some (&mut self.rom.mem[addr])
             }
@@ -512,7 +508,11 @@ impl CPU {
                 fail!(fmt!("Unknown opcode : %02X", opcode as uint))
             }
         }
-        self.pc = next_pc
+        if (self.pc < 0x0100 && next_pc >= 0x0100) {
+            // Jumping out of bios
+            self.mmu.bios_is_mapped = false
+        }
+        self.pc = next_pc;
     }
 }
 
