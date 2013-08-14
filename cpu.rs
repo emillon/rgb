@@ -324,7 +324,7 @@ impl CPU {
                         self.flag_reset(F_N);
                         self.flag_set(F_H);
                     }
-                    _ => fail!(fmt!("Unknown ext op : CB %02X", op as uint))
+                    _ => fail!("Unknown ext op : CB %02X", op as uint)
                 }
             }
             0xCC => { // CALL Z, nn nn
@@ -342,7 +342,7 @@ impl CPU {
                 call_cond(F_C)
             }
             0xDD => {
-                fail!(fmt!("Bad opcode : %02X", opcode as uint))
+                fail!("Bad opcode : %02X", opcode as uint)
             }
             0xE2 => { // LD (FF00+C), A
                 let a = self.r8(R8_A);
@@ -376,7 +376,7 @@ impl CPU {
                 next_pc = 0x38;
             }
             _ => {
-                fail!(fmt!("Unknown opcode : %02X", opcode as uint))
+                fail!("Unknown opcode : %02X", opcode as uint)
             }
         }
         if (self.pc < 0x0100 && next_pc >= 0x0100) {

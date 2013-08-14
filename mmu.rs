@@ -6,6 +6,7 @@ use rom::ROM;
 enum Mapping<T> {
     Map_Direct(T), // Read and Write to T
     Map_Zero,      // Read 0, Write nothing
+    Map_IO(u16),   // I/O on specified port
 }
 
 struct MMU {
@@ -54,7 +55,7 @@ impl MMU {
             0xC000..0xFDFF => { Map_Direct(&mut self.wram[addr & 0x1fff]) }
             0xFE00..0xFE9F => { Map_Direct(&mut self.oam[addr & 0xFF]) }
             0xFEA0..0xFEFF => { Map_Zero }
-            0xFF00..0xFF7F => { Map_Zero } // I/O TODO
+            0xFF00..0xFF7F => { Map_IO(addr) }
             0xFF80..0xFFFE => { Map_Direct(&mut self.zram[addr & 0x7F]) }
             0xFFFF         => { Map_Direct(&mut self.ie) }
             _ => {
@@ -67,14 +68,16 @@ impl MMU {
     pub fn rb(&mut self, addr: u16) -> u8 {
         match self.vmem(addr) {
             Map_Direct(p) => *p,
-            Map_Zero => 0
+            Map_Zero => 0,
+            Map_IO(addr) => fail!("Input on port %04X", addr as uint),
         }
     }
 
     pub fn wb(&mut self, addr: u16, val: u8) {
         match self.vmem(addr) {
             Map_Direct(p) => *p = val,
-            Map_Zero => {}
+            Map_Zero => {},
+            Map_IO(addr) => fail!("Output on port %04X", addr as uint),
         }
     }
 
