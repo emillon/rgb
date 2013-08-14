@@ -241,6 +241,16 @@ impl CPU {
             0x0E => { // LD C, nn
                 ld8(R8_C, A_Immediate);
             }
+            0x0F => { // RRCA
+                let a = self.r8(R8_A);
+                let lsb = a & 0x01;
+                let new = (a >> 1) & (lsb << 7);
+                self.w8(R8_A, new);
+                self.flag_reset(F_Z);
+                self.flag_reset(F_N);
+                self.flag_reset(F_H);
+                self.flag_set_bool(F_C, lsb != 0);
+            }
             0x12 => { // LD (DE), A
                 ld8_ind(self.reg_de, R8_A)
             }
