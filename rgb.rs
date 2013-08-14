@@ -321,6 +321,11 @@ impl CPU {
                 next_pc = dest
             }
         };
+        let jr_cond = |flag, exp_value, offset: u8| {
+            if self.flag_is_set(flag) == exp_value {
+                next_pc += offset as u16
+            }
+        };
         let alu_op = |op: ALU_Op, what: Option<R8>| {
             let a = self.r8(R8_A);
             let y = match what {
@@ -423,10 +428,7 @@ impl CPU {
                 ld8_ind(self.reg_de, R8_A)
             }
             0x20 => { // JR NZ, nn
-                let off = arg_b();
-                if self.flag_is_reset(F_Z) {
-                    next_pc += off as u16
-                }
+                jr_cond(F_Z, false, arg_b());
             }
             0x21 => { // LD HL, nn nn
                 self.reg_hl = arg_w()
@@ -446,6 +448,9 @@ impl CPU {
                 let a = self.r8(R8_A);
                 self.mmu.wb(self.reg_hl, a);
                 self.reg_hl -= 1;
+            }
+            0x38 => { // JR C, nn
+                jr_cond(F_C, true, arg_b());
             }
             0x3E => { // LD A, nn
                 ld8(R8_A, A_Immediate)
