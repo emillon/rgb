@@ -3,6 +3,11 @@ use std::vec;
 use bits::*;
 use rom::ROM;
 
+enum Mapping<T> {
+    Map_Direct(T), // Read and Write to T
+    Map_Zero,      // Read 0, Write nothing
+}
+
 struct MMU {
     bios_is_mapped: bool,
     bios: ~[u8],
@@ -34,24 +39,24 @@ impl MMU {
         self.ie = 0
     }
 
-    fn vmem<'a> (&'a mut self, addr: u16) -> Option<&'a mut u8> {
+    fn vmem<'a> (&'a mut self, addr: u16) -> Mapping<&'a mut u8> {
         match addr {
             0x0000..0x00FF => {
                 if self.bios_is_mapped {
-                    Some (&mut self.bios[addr])
+                    Map_Direct(&mut self.bios[addr])
                 } else {
-                    Some (&mut self.rom.mem[addr])
+                    Map_Direct(&mut self.rom.mem[addr])
                 }
             }
-            0x0100..0x7FFF => { Some (&mut self.rom.mem[addr]) }
-            0x8000..0x9FFF => { Some (&mut self.vram[addr & 0x1fff]) }
-            0xA000..0xBFFF => { Some (&mut self.eram[addr & 0x1fff]) }
-            0xC000..0xFDFF => { Some (&mut self.wram[addr & 0x1fff]) }
-            0xFE00..0xFE9F => { Some (&mut self.oam[addr & 0xFF]) }
-            0xFEA0..0xFEFF => { None }
-            0xFF00..0xFF7F => { None } // I/O TODO
-            0xFF80..0xFFFE => { Some (&mut self.zram[addr & 0x7F]) }
-            0xFFFF         => { Some (&mut self.ie) }
+            0x0100..0x7FFF => { Map_Direct(&mut self.rom.mem[addr]) }
+            0x8000..0x9FFF => { Map_Direct(&mut self.vram[addr & 0x1fff]) }
+            0xA000..0xBFFF => { Map_Direct(&mut self.eram[addr & 0x1fff]) }
+            0xC000..0xFDFF => { Map_Direct(&mut self.wram[addr & 0x1fff]) }
+            0xFE00..0xFE9F => { Map_Direct(&mut self.oam[addr & 0xFF]) }
+            0xFEA0..0xFEFF => { Map_Zero }
+            0xFF00..0xFF7F => { Map_Zero } // I/O TODO
+            0xFF80..0xFFFE => { Map_Direct(&mut self.zram[addr & 0x7F]) }
+            0xFFFF         => { Map_Direct(&mut self.ie) }
             _ => {
                 println(fmt!("%04X", addr as uint));
                 fail!("MMU::rb")
@@ -61,15 +66,15 @@ impl MMU {
 
     pub fn rb(&mut self, addr: u16) -> u8 {
         match self.vmem(addr) {
-            Some (p) => *p,
-            None => 0
+            Map_Direct(p) => *p,
+            Map_Zero => 0
         }
     }
 
     pub fn wb(&mut self, addr: u16, val: u8) {
         match self.vmem(addr) {
-            Some (p) => *p = val,
-            None => {}
+            Map_Direct(p) => *p = val,
+            Map_Zero => {}
         }
     }
 
