@@ -1,5 +1,6 @@
 mod bits;
 mod cpu;
+mod io;
 mod main;
 mod mmu;
 mod rom;
