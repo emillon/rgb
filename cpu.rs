@@ -384,6 +384,11 @@ impl CPU {
             0xF6 => { // OR nn
                 alu_op(Op_OR, None)
             }
+            0xFA => { // LD A, (nn nn)
+                let addr = arg_w();
+                let val = self.mmu.rb(addr);
+                self.w8(R8_A, val);
+            }
             0xFE => { // CP A, nn
                 let n = arg_b();
                 let a = self.r8(R8_A);
