@@ -357,6 +357,15 @@ impl CPU {
             };
             self.w8(dest, val)
         };
+        let push_w = |val| {
+            self.reg_sp -= 2;
+            self.mmu.ww(self.reg_sp, val);
+        };
+        let pop_w = || {
+            let val = self.mmu.rw(self.reg_sp);
+            self.reg_sp += 2;
+            val
+        };
         match opcode {
             0x00 => { // NOP
             }
@@ -421,8 +430,7 @@ impl CPU {
                 next_pc = dest
             }
             0xC9 => { // RET
-                next_pc = self.mmu.rw(self.reg_sp);
-                self.reg_sp += 2;
+                next_pc = pop_w();
             }
             0x31 => { // LD SP, nn nn
                 self.reg_sp = arg_w()
@@ -467,8 +475,7 @@ impl CPU {
                 call_cond(F_Z)
             }
             0xCD => { // CALL nn nn
-                self.reg_sp -= 2;
-                self.mmu.ww(self.reg_sp, self.pc);
+                push_w(self.pc);
                 let dest = arg_w(); // FIXME
                 next_pc = dest
             }
@@ -485,8 +492,7 @@ impl CPU {
                 self.mmu.wb(addr, a);
             }
             0xE5 => { // PUSH HL
-                self.reg_sp -= 2;
-                self.mmu.ww(self.reg_sp, self.reg_hl);
+                push_w(self.reg_hl)
             }
             0xE6 => { // AND nn
                 alu_op(Op_AND, None)
