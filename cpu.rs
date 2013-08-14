@@ -37,6 +37,7 @@ enum ALU_Op {
     Op_ADD,
     Op_ADC,
     Op_SUB,
+    Op_SBC,
 }
 
 enum Addressing_Mode {
@@ -150,13 +151,21 @@ impl CPU {
                 Some(reg) => self.r8(reg),
                 None => arg_b()
             };
+            let carry = || {
+                if self.flag_is_set(F_C) {
+                    1
+                } else {
+                    0
+                }
+            };
             let z = match op {
                 Op_OR  => a | y,
                 Op_XOR => a ^ y,
                 Op_AND => a & y,
                 Op_ADD => a + y,
-                Op_ADC => a + y + (if self.flag_is_set(F_C) { 1 } else { 0 }),
+                Op_ADC => a + y + carry(),
                 Op_SUB => a - y,
+                Op_SBC => a - y - carry(),
             };
             self.w8(R8_A, z);
             let a2 = self.r8(R8_A);
@@ -182,7 +191,7 @@ impl CPU {
                     // TODO honor h
                     // TODO honor c
                 }
-                Op_SUB => {
+                Op_SUB | Op_SBC => {
                     honor_z();
                     self.flag_set(F_N);
                     // TODO honor h
@@ -328,6 +337,9 @@ impl CPU {
             }
             0x93 => { // SUB E
                 alu_op(Op_SUB, Some(R8_E));
+            }
+            0x9A => { // SBC D
+                alu_op(Op_SBC, Some(R8_D));
             }
             0xAF => { // XOR A
                 alu_op(Op_XOR, Some(R8_A));
