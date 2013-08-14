@@ -554,6 +554,11 @@ impl CPU {
             0xF3 => { // DI
                 self.mmu.interrupts_disable()
             }
+            0xFF => { // RST 0x38
+                // TODO save regs
+                push_w(self.pc);
+                next_pc = 0x38;
+            }
             _ => {
                 fail!(fmt!("Unknown opcode : %02X", opcode as uint))
             }
@@ -562,6 +567,7 @@ impl CPU {
             // Jumping out of bios
             self.mmu.bios_is_mapped = false
         }
+        // TODO detect PC wrap
         self.pc = next_pc;
     }
 }
