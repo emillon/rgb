@@ -36,6 +36,7 @@ enum ALU_Op {
     Op_AND,
     Op_ADD,
     Op_ADC,
+    Op_SUB,
 }
 
 enum Addressing_Mode {
@@ -154,7 +155,8 @@ impl CPU {
                 Op_XOR => a ^ y,
                 Op_AND => a & y,
                 Op_ADD => a + y,
-                Op_ADC => a + y + (if self.flag_is_set(F_C) { 1 } else { 0 })
+                Op_ADC => a + y + (if self.flag_is_set(F_C) { 1 } else { 0 }),
+                Op_SUB => a - y,
             };
             self.w8(R8_A, z);
             let a2 = self.r8(R8_A);
@@ -177,6 +179,12 @@ impl CPU {
                 Op_ADD | Op_ADC => {
                     honor_z();
                     self.flag_reset(F_N);
+                    // TODO honor h
+                    // TODO honor c
+                }
+                Op_SUB => {
+                    honor_z();
+                    self.flag_set(F_N);
                     // TODO honor h
                     // TODO honor c
                 }
@@ -317,6 +325,9 @@ impl CPU {
             }
             0x89 => { // ADC A, C
                 alu_op(Op_ADC, Some(R8_C));
+            }
+            0x93 => { // SUB E
+                alu_op(Op_SUB, Some(R8_E));
             }
             0xAF => { // XOR A
                 alu_op(Op_XOR, Some(R8_A));
