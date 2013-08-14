@@ -54,6 +54,7 @@ struct MMU {
     bios_is_mapped: bool,
     bios: ~[u8],
     eram: ~[u8],
+    ie: u8,
     oam: ~[u8],
     rom: ~ROM,
     vram: ~[u8],
@@ -67,12 +68,17 @@ impl MMU {
             bios_is_mapped: true,
             bios: bios,
             eram: ~[], // FIXME
+            ie: 0,
             oam: vec::from_elem(160, 0 as u8),
             rom: rom,
             vram: vec::from_elem(8192, 0 as u8),
             wram: vec::from_elem(8192, 0 as u8),
             zram: vec::from_elem(127, 0 as u8),
         }
+    }
+
+    fn interrupts_disable(&mut self) {
+        self.ie = 0
     }
 
     fn vmem<'a> (&'a mut self, addr: u16) -> Option<&'a mut u8> {
@@ -119,7 +125,9 @@ impl MMU {
                         }
                     }
                     0xF00 => {
-                        if(addr >= 0xFF80) {
+                        if addr == 0xFFFF {
+                            Some (&mut self.ie)
+                        } else if(addr >= 0xFF80) {
 			    Some (&mut self.zram[addr & 0x7F])
 			} else {
 			    // I/O
@@ -498,7 +506,7 @@ impl CPU {
                 alu_op(Op_AND, None)
             }
             0xF3 => { // DI
-                /* TODO disable interrupts */
+                self.mmu.interrupts_disable()
             }
             _ => {
                 fail!(fmt!("Unknown opcode : %02X", opcode as uint))
