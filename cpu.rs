@@ -122,7 +122,7 @@ impl CPU {
     pub fn interp(&mut self) {
         let opcode = self.mmu.rb(self.pc);
         let mut next_pc = self.pc + 1;
-        println(fmt!("PC=%04X OP=%02X", self.pc as uint, opcode as uint));
+        info!("PC=%04X OP=%02X", self.pc as uint, opcode as uint);
         let arg_b = || {
             next_pc += 1;
             self.mmu.rb(self.pc + 1)
