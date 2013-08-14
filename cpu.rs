@@ -206,6 +206,11 @@ impl CPU {
         let ret = || {
             next_pc = pop_w();
         };
+        let ret_cond = |flag, expected| {
+            if self.flag_is_set(flag) == expected {
+                ret()
+            }
+        };
         match opcode {
             0x00 => { // NOP
             }
@@ -314,13 +319,14 @@ impl CPU {
                 alu_op(Op_OR, Some(R8_B));
             }
             0xC0 => { // RET NZ
-                if self.flag_is_reset(F_Z) {
-                    ret()
-                }
+                ret_cond(F_Z, false);
             }
             0xC3 => { // JP nn nn
                 let dest = self.mmu.rw(self.pc + 1);
                 next_pc = dest
+            }
+            0xC8 => { // RET Z
+                ret_cond(F_Z, true);
             }
             0xC9 => { // RET
                 ret()
