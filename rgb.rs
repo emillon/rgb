@@ -531,6 +531,14 @@ impl CPU {
             0xE6 => { // AND nn
                 alu_op(Op_AND, None)
             }
+            0xFE => { // CP A, nn
+                let n = arg_b();
+                let a = self.r8(R8_A);
+                self.flag_set_bool(F_Z, a == n);
+                self.flag_set(F_N);
+                // TODO F_H
+                // TODO F_C
+            }
             0xF3 => { // DI
                 self.mmu.interrupts_disable()
             }
