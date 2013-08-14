@@ -361,6 +361,10 @@ impl CPU {
             };
             self.w8(dest, val)
         };
+        let ld8_ind = |dest, src| { // LD (dest), src
+            let v = self.r8(src);
+            self.mmu.wb(dest, v);
+        };
         let push_w = |val| {
             self.reg_sp -= 2;
             self.mmu.ww(self.reg_sp, val);
@@ -405,6 +409,9 @@ impl CPU {
                 self.flag_reset(F_N);
                 // TODO F_H
             }
+            0x12 => { // LD (DE), A
+                ld8_ind(self.reg_de, R8_A)
+            }
             0x20 => { // JR NZ, nn
                 let off = arg_b();
                 if self.flag_is_reset(F_Z) {
@@ -448,8 +455,7 @@ impl CPU {
                 ld8(R8_A, None)
             }
             0x73 => { // LD (HL), E
-                let e = self.r8(R8_E);
-                self.mmu.wb(self.reg_hl, e);
+                ld8_ind(self.reg_hl, R8_E);
             }
             0x88 => { // ADC A, B
                 alu_op(Op_ADC, Some(R8_B));
