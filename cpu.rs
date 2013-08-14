@@ -270,6 +270,9 @@ impl CPU {
                 self.mmu.wb(self.reg_hl, a);
                 self.reg_hl += 1;
             }
+            0x28 => { // JR Z, nn
+                jr_cond(F_Z, true)
+            }
             0x2E => { // LD L, nn
                 ld8(R8_L, A_Immediate)
             }
