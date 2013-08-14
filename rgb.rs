@@ -393,6 +393,14 @@ impl CPU {
             0x0B => { // DEC BC
                 self.reg_bc -= 1;
             }
+            0x0C => { // INC C
+                let c = self.r8(R8_C);
+                self.w8(R8_C, c + 1);
+                let c2 = self.r8(R8_C);
+                self.flag_set_bool(F_Z, c2 == 0);
+                self.flag_reset(F_N);
+                // TODO F_H
+            }
             0x0D => { // DEC C
                 let c = self.r8(R8_C);
                 self.w8(R8_C, c-1);
@@ -403,14 +411,6 @@ impl CPU {
             }
             0x0E => { // LD C, nn
                 ld8(R8_C, None);
-            }
-            0x0C => { // INC C
-                let c = self.r8(R8_C);
-                self.w8(R8_C, c + 1);
-                let c2 = self.r8(R8_C);
-                self.flag_set_bool(F_Z, c2 == 0);
-                self.flag_reset(F_N);
-                // TODO F_H
             }
             0x12 => { // LD (DE), A
                 ld8_ind(self.reg_de, R8_A)
@@ -432,28 +432,6 @@ impl CPU {
             0x2E => { // LD L, nn
                 ld8(R8_L, None)
             }
-            0x66 => { // LD H, (HL)
-                let val = self.mmu.rb(self.reg_hl);
-                self.w8(R8_H, val)
-            }
-            0x79 => { // LD A, C
-                ld8(R8_A, Some(R8_C))
-            }
-            0x83 => { // ADD A, E
-                alu_op(Op_ADD, Some(R8_E))
-            }
-            0xC0 => { // RET NZ
-                if self.flag_is_reset(F_Z) {
-                    ret()
-                }
-            }
-            0xC3 => { // JP nn nn
-                let dest = self.mmu.rw(self.pc + 1);
-                next_pc = dest
-            }
-            0xC9 => { // RET
-                ret()
-            }
             0x31 => { // LD SP, nn nn
                 self.reg_sp = arg_w()
             }
@@ -465,8 +443,18 @@ impl CPU {
             0x3E => { // LD A, nn
                 ld8(R8_A, None)
             }
+            0x66 => { // LD H, (HL)
+                let val = self.mmu.rb(self.reg_hl);
+                self.w8(R8_H, val)
+            }
             0x73 => { // LD (HL), E
                 ld8_ind(self.reg_hl, R8_E);
+            }
+            0x79 => { // LD A, C
+                ld8(R8_A, Some(R8_C))
+            }
+            0x83 => { // ADD A, E
+                alu_op(Op_ADD, Some(R8_E))
             }
             0x88 => { // ADC A, B
                 alu_op(Op_ADC, Some(R8_B));
@@ -479,6 +467,18 @@ impl CPU {
             }
             0xB0 => { // OR B
                 alu_op(Op_OR, Some(R8_B));
+            }
+            0xC0 => { // RET NZ
+                if self.flag_is_reset(F_Z) {
+                    ret()
+                }
+            }
+            0xC3 => { // JP nn nn
+                let dest = self.mmu.rw(self.pc + 1);
+                next_pc = dest
+            }
+            0xC9 => { // RET
+                ret()
             }
             0xCB => { // ext ops
                 let op = arg_b();
