@@ -222,6 +222,12 @@ enum ALU_Op {
     Op_ADC,
 }
 
+enum Addressing_Mode {
+    A_Indirect(u16), // FIXME should be R16
+    A_Direct(R8),
+    A_Immediate,
+}
+
 struct CPU {
     mmu: ~MMU,
     pc: u16,
@@ -354,10 +360,11 @@ impl CPU {
                 }
             }
         };
-        let ld8 = |dest, src: Option<R8>| {
+        let ld8 = |dest, src: Addressing_Mode| {
             let val = match src {
-                Some(reg) => self.r8(reg),
-                None => arg_b()
+                A_Indirect(addr) => self.mmu.rb(addr),
+                A_Direct(reg) => self.r8(reg),
+                A_Immediate => arg_b(),
             };
             self.w8(dest, val)
         };
@@ -410,7 +417,7 @@ impl CPU {
                 // TODO F_H
             }
             0x0E => { // LD C, nn
-                ld8(R8_C, None);
+                ld8(R8_C, A_Immediate);
             }
             0x12 => { // LD (DE), A
                 ld8_ind(self.reg_de, R8_A)
@@ -430,7 +437,7 @@ impl CPU {
                 self.reg_hl += 1;
             }
             0x2E => { // LD L, nn
-                ld8(R8_L, None)
+                ld8(R8_L, A_Immediate)
             }
             0x31 => { // LD SP, nn nn
                 self.reg_sp = arg_w()
@@ -441,7 +448,7 @@ impl CPU {
                 self.reg_hl -= 1;
             }
             0x3E => { // LD A, nn
-                ld8(R8_A, None)
+                ld8(R8_A, A_Immediate)
             }
             0x66 => { // LD H, (HL)
                 let val = self.mmu.rb(self.reg_hl);
@@ -451,7 +458,10 @@ impl CPU {
                 ld8_ind(self.reg_hl, R8_E);
             }
             0x79 => { // LD A, C
-                ld8(R8_A, Some(R8_C))
+                ld8(R8_A, A_Direct(R8_C))
+            }
+            0x7E => { // LD A,(HL)
+                ld8(R8_A, A_Indirect(self.reg_hl))
             }
             0x83 => { // ADD A, E
                 alu_op(Op_ADD, Some(R8_E))
