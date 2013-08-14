@@ -318,6 +318,9 @@ impl CPU {
             0xB0 => { // OR B
                 alu_op(Op_OR, Some(R8_B));
             }
+            0xB7 => { // OR A
+                alu_op(Op_OR, Some(R8_A));
+            }
             0xC0 => { // RET NZ
                 ret_cond(F_Z, false);
             }
