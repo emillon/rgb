@@ -429,6 +429,9 @@ impl CPU {
                 self.mmu.wb(self.reg_hl, a);
                 self.reg_hl += 1;
             }
+            0x2E => { // LD L, nn
+                ld8(R8_L, None)
+            }
             0x66 => { // LD H, (HL)
                 let val = self.mmu.rb(self.reg_hl);
                 self.w8(R8_H, val)
