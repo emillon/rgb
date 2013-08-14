@@ -1,158 +1,5 @@
-use std::io;
-use std::os;
-use std::str;
-use std::vec;
-
-struct ROM {
-    mem: ~[u8]
-}
-
-impl ROM {
-    fn new(rom_data: ~[u8]) -> ROM {
-        ROM { mem: rom_data }
-    }
-
-    fn read_word_be(&self, offset: u16) -> u16 {
-        (self.mem[offset] as u16 << 8) + self.mem[offset + 1] as u16
-    }
-
-    fn hdr_checksum(&self) -> u8 {
-        self.mem.slice(0x134, 0x14C).iter().fold(-1, |n, &v| n + v - 1)
-    }
-
-    fn rom_checksum(&self) -> u16 {
-        let sum: u16 = self.mem.iter().fold(0, |n, &v|  n + v as u16);
-        let ck_hi = self.mem[0x014E] as u16;
-        let ck_lo = self.mem[0x014F] as u16;
-        sum - ck_hi - ck_lo
-    }
-
-    fn dump_header (&self) {
-        let title = str::from_bytes(self.mem.slice(0x134, 0x143));
-        let ct = self.mem[0x147];
-        print(fmt!("Title: %s\nType : %u\n", title, ct as uint));
-        let stored_hdr_checksum = self.mem[0x014D];
-        let hdr_ck_str =
-            if self.hdr_checksum() == stored_hdr_checksum {
-                "OK"
-            } else {
-                "NOT OK"
-            };
-        let stored_rom_checksum: u16 = self.read_word_be(0x014E);
-        let rom_ck_str =
-            if self.rom_checksum() == stored_rom_checksum {
-                "OK"
-            } else {
-                "NOT OK"
-            };
-        println(fmt!("HDR Checksum: %02X (%s)", stored_hdr_checksum as uint, hdr_ck_str));
-        println(fmt!("ROM Checksum: %04X (%s)", stored_rom_checksum as uint, rom_ck_str));
-    }
-}
-
-struct MMU {
-    bios_is_mapped: bool,
-    bios: ~[u8],
-    eram: ~[u8],
-    ie: u8,
-    oam: ~[u8],
-    rom: ~ROM,
-    vram: ~[u8],
-    wram: ~[u8],
-    zram: ~[u8]
-}
-
-impl MMU {
-    fn new(rom: ~ROM, bios: ~[u8]) -> MMU {
-        MMU {
-            bios_is_mapped: true,
-            bios: bios,
-            eram: ~[], // FIXME
-            ie: 0,
-            oam: vec::from_elem(160, 0 as u8),
-            rom: rom,
-            vram: vec::from_elem(8192, 0 as u8),
-            wram: vec::from_elem(8192, 0 as u8),
-            zram: vec::from_elem(127, 0 as u8),
-        }
-    }
-
-    fn interrupts_disable(&mut self) {
-        self.ie = 0
-    }
-
-    fn vmem<'a> (&'a mut self, addr: u16) -> Option<&'a mut u8> {
-        match addr {
-            0x0000..0x00FF => {
-                if self.bios_is_mapped {
-                    Some (&mut self.bios[addr])
-                } else {
-                    Some (&mut self.rom.mem[addr])
-                }
-            }
-            0x0100..0x7FFF => { Some (&mut self.rom.mem[addr]) }
-            0x8000..0x9FFF => { Some (&mut self.vram[addr & 0x1fff]) }
-            0xA000..0xBFFF => { Some (&mut self.eram[addr & 0x1fff]) }
-            0xC000..0xFDFF => { Some (&mut self.wram[addr & 0x1fff]) }
-            0xFE00..0xFE9F => { Some (&mut self.oam[addr & 0xFF]) }
-            0xFEA0..0xFEFF => { None }
-            0xFF00..0xFF7F => { None } // I/O TODO
-            0xFF80..0xFFFE => { Some (&mut self.zram[addr & 0x7F]) }
-            0xFFFF         => { Some (&mut self.ie) }
-            _ => {
-                println(fmt!("%04X", addr as uint));
-                fail!("MMU::rb")
-            }
-        }
-    }
-
-    fn rb(&mut self, addr: u16) -> u8 {
-        match self.vmem(addr) {
-            Some (p) => *p,
-            None => 0
-        }
-    }
-
-    fn wb(&mut self, addr: u16, val: u8) {
-        match self.vmem(addr) {
-            Some (p) => *p = val,
-            None => {}
-        }
-    }
-
-    fn rw(&mut self, addr: u16) -> u16 {
-        let lo = self.rb(addr);
-        let hi = self.rb(addr + 1);
-        u16_make(hi, lo)
-    }
-
-    fn ww(&mut self, addr: u16, val: u16) {
-        let lo = u16_lo(val);
-        let hi = u16_hi(val);
-        self.wb(addr, lo);
-        self.wb(addr, hi);
-    }
-}
-
-fn u16_lo(n: u16) -> u8 {
-    (n & 0xFF) as u8
-}
-
-fn u16_hi(n: u16) -> u8 {
-    ((n & 0xFF00) >> 8) as u8
-}
-
-fn u16_make(hi: u8, lo: u8) -> u16 {
-    (hi as u16 << 8) + lo as u16
-}
-
-fn u16_set_hi(w: u16, b: u8) -> u16 {
-    u16_make(b, u16_lo(w))
-}
-
-fn u16_set_lo(w: u16, b: u8) -> u16 {
-    u16_make(u16_hi(w), b)
-}
+use bits::*;
+use mmu::MMU;
 
 enum Flag {
     F_Z,
@@ -208,7 +55,7 @@ struct CPU {
 }
 
 impl CPU {
-    fn new(mmu: ~MMU) -> CPU {
+    pub fn new(mmu: ~MMU) -> CPU {
         CPU {
             mmu: mmu,
             pc: 0x0,
@@ -272,7 +119,7 @@ impl CPU {
         self.w8(R8_F, flags & (! f.mask()))
     }
 
-    fn interp(&mut self) {
+    pub fn interp(&mut self) {
         let opcode = self.mmu.rb(self.pc);
         let mut next_pc = self.pc + 1;
         println(fmt!("PC=%04X OP=%02X", self.pc as uint, opcode as uint));
@@ -538,25 +385,5 @@ impl CPU {
         }
         // TODO detect PC wrap
         self.pc = next_pc;
-    }
-}
-
-fn main() {
-    println("rgb");
-    let args = os::args();
-    if args.len() <= 1 {
-        println("Usage: rgb file.gb");
-        os::set_exit_status(1);
-        return
-    }
-    let file = os::args()[1];
-    let rom_data = io::read_whole_file(&PosixPath(file)).expect(fmt!("Cannot read %s", file));
-    let rom = ~ROM::new(rom_data);
-    rom.dump_header();
-    let bios = io::read_whole_file(&PosixPath("bios.dat")).expect("Cannot open bios");
-    let mmu = MMU::new(rom, bios);
-    let mut cpu = CPU::new(~mmu);
-    loop {
-        cpu.interp()
     }
 }
