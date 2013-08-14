@@ -67,11 +67,11 @@ impl MMU {
             bios_is_mapped: true,
             bios: bios,
             eram: ~[], // FIXME
-            oam: ~[], // FIXME
+            oam: vec::from_elem(160, 0 as u8),
             rom: rom,
             vram: vec::from_elem(8192, 0 as u8),
             wram: vec::from_elem(8192, 0 as u8),
-            zram: ~[]  // FIXME
+            zram: vec::from_elem(127, 0 as u8),
         }
     }
 
