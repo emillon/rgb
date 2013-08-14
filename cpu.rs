@@ -392,6 +392,9 @@ impl CPU {
             0xDD => {
                 fail!("Bad opcode : %02X", opcode as uint)
             }
+            0xDE => { // SBC nn
+                alu_op(Op_SBC, None)
+            }
             0xE2 => { // LD (FF00+C), A
                 let a = self.r8(R8_A);
                 let c = self.r8(R8_C);
