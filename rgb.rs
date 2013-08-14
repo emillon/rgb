@@ -483,6 +483,9 @@ impl CPU {
                 let dest = arg_w(); // FIXME
                 next_pc = dest
             }
+            0xD5 => { // PUSH DE
+                push_w(self.reg_de)
+            }
             0xDC => { // CALL C, nn nn
                 call_cond(F_C)
             }
