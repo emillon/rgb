@@ -279,6 +279,18 @@ impl CPU {
             0x12 => { // LD (DE), A
                 ld8_ind(self.reg_de, R8_A)
             }
+            0x1F => { // RRA
+                let carry = if self.flag_is_set(F_C) {
+                    1
+                } else {
+                    0
+                };
+                let a = self.r8(R8_A);
+                let lsb = a & 0x01;
+                self.flag_set_bool(F_C, lsb != 0);
+                let new = (a >> 1) & (carry << 7);
+                self.w8(R8_A, new);
+            }
             0x20 => { // JR NZ, nn
                 jr_cond(F_Z, false)
             }
