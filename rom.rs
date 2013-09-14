@@ -25,7 +25,7 @@ impl ROM {
     }
 
     pub fn dump_header (&self) {
-        let title = str::from_bytes(self.mem.slice(0x134, 0x143));
+        let title = str::from_utf8(self.mem.slice(0x134, 0x143));
         let ct = self.mem[0x147];
         print(fmt!("Title: %s\nType : %u\n", title, ct as uint));
         let stored_hdr_checksum = self.mem[0x014D];
