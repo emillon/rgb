@@ -1,4 +1,10 @@
-use bits::*;
+use bits::{
+    u16_hi,
+    u16_lo,
+    u16_make,
+    u16_set_hi,
+    u16_set_lo,
+};
 use mmu::MMU;
 
 enum Flag {

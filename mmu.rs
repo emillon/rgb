@@ -1,6 +1,10 @@
 use std::vec;
 
-use bits::*;
+use bits::{
+    u16_hi,
+    u16_lo,
+    u16_make,
+};
 use io::read_port;
 use rom::ROM;
 
