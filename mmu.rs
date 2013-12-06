@@ -65,7 +65,7 @@ impl MMU {
             0xFF80..0xFFFE => { Map_Direct(&mut self.zram[addr & 0x7F]) }
             0xFFFF         => { Map_Direct(&mut self.ie) }
             _ => {
-                println(fmt!("%04X", addr as uint));
+                println(format!("{:04X}", addr as uint));
                 fail!("MMU::rb")
             }
         }
@@ -83,7 +83,7 @@ impl MMU {
         match self.vmem(addr) {
             Map_Direct(p) => *p = val,
             Map_Zero => {},
-            Map_IO(addr) => fail!("Output on port %04X", addr as uint),
+            Map_IO(addr) => fail!("Output on port {:04X}", addr as uint),
         }
     }
 

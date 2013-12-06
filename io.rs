@@ -4,7 +4,7 @@ pub fn read_port(port: u8) -> u8 {
             0x0F // None pressed
         }
         _ => {
-            warn!("Input on port %02X", port as uint);
+            warn!("Input on port {:02X}", port as uint);
             0x00
         }
     }

@@ -130,7 +130,7 @@ impl CPU {
     pub fn interp(&mut self) {
         let opcode = self.mmu.rb(self.pc);
         let mut next_pc = self.pc + 1;
-        info!("PC=%04X OP=%02X", self.pc as uint, opcode as uint);
+        info!("PC={:04X} OP={:02X}", self.pc as uint, opcode as uint);
         let arg_b = || {
             next_pc += 1;
             self.mmu.rb(self.pc + 1)
@@ -390,7 +390,7 @@ impl CPU {
                         self.flag_reset(F_N);
                         self.flag_set(F_H);
                     }
-                    _ => fail!("Unknown ext op : CB %02X", op as uint)
+                    _ => fail!("Unknown ext op : CB {:02X}", op as uint)
                 }
             }
             0xCC => { // CALL Z, nn nn
@@ -408,7 +408,7 @@ impl CPU {
                 call_cond(F_C)
             }
             0xDD => {
-                fail!("Bad opcode : %02X", opcode as uint)
+                fail!("Bad opcode : {:02X}", opcode as uint)
             }
             0xDE => { // SBC nn
                 alu_op(Op_SBC, None)
@@ -450,7 +450,7 @@ impl CPU {
                 next_pc = 0x38;
             }
             _ => {
-                fail!("Unknown opcode : %02X", opcode as uint)
+                fail!("Unknown opcode : {:02X}", opcode as uint)
             }
         }
         if (self.pc < 0x0100 && next_pc >= 0x0100) {
