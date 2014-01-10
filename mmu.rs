@@ -15,7 +15,7 @@ enum Mapping<T> {
     Map_IO(u8),    // I/O on specified port
 }
 
-struct MMU {
+pub struct MMU {
     bios_is_mapped: bool,
     bios: ~[u8],
     eram: ~[u8],

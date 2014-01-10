@@ -1,6 +1,6 @@
 use std::str;
 
-struct ROM {
+pub struct ROM {
     mem: ~[u8]
 }
 

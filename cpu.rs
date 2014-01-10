@@ -52,7 +52,7 @@ enum Addressing_Mode {
     A_Immediate,
 }
 
-struct CPU {
+pub struct CPU {
     mmu: ~MMU,
     pc: u16,
     reg_af: u16,
