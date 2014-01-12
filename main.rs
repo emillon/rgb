@@ -7,10 +7,10 @@ use rom::ROM;
 
 #[main]
 fn main() {
-    println("rgb");
+    println!("rgb");
     let args = os::args();
     if args.len() <= 1 {
-        println("Usage: rgb file.gb");
+        println!("Usage: rgb file.gb");
         os::set_exit_status(1);
         return
     }

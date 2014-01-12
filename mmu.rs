@@ -65,7 +65,7 @@ impl MMU {
             0xFF80..0xFFFE => { Map_Direct(&mut self.zram[addr & 0x7F]) }
             0xFFFF         => { Map_Direct(&mut self.ie) }
             _ => {
-                println(format!("{:04X}", addr as uint));
+                println!("{:04X}", addr as uint);
                 fail!("MMU::rb")
             }
         }

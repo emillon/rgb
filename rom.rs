@@ -27,7 +27,8 @@ impl ROM {
     pub fn dump_header (&self) {
         let title = str::from_utf8(self.mem.slice(0x134, 0x143));
         let ct = self.mem[0x147];
-        print(format!("Title: {:s}\nType : {:u}\n", title, ct as uint));
+        println!("Title: {:s}", title);
+        println!("Type : {:u}", ct as uint);
         let stored_hdr_checksum = self.mem[0x014D];
         let hdr_ck_str =
             if self.hdr_checksum() == stored_hdr_checksum {
@@ -42,7 +43,7 @@ impl ROM {
             } else {
                 "NOT OK"
             };
-        println(format!("HDR Checksum: {:02X} ({:s})", stored_hdr_checksum as uint, hdr_ck_str));
-        println(format!("ROM Checksum: {:04X} ({:s})", stored_rom_checksum as uint, rom_ck_str));
+        println!("HDR Checksum: {:02X} ({:s})", stored_hdr_checksum as uint, hdr_ck_str);
+        println!("ROM Checksum: {:04X} ({:s})", stored_rom_checksum as uint, rom_ck_str);
     }
 }
