@@ -105,10 +105,6 @@ impl CPU {
         (self.r8(R8_F) & f.mask()) != 0
     }
 
-    fn flag_is_reset(&self, f: Flag) -> bool {
-        !self.flag_is_set(f)
-    }
-
     fn flag_set_bool(&mut self, f: Flag, v: bool) {
         if v {
             self.flag_set(f)
