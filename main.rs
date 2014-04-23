@@ -15,10 +15,10 @@ fn main() {
         return
     }
     let file = os::args()[1];
-    let rom_data = io::File::open(&Path::new(file)).read_to_end();
+    let rom_data = io::File::open(&Path::new(file)).read_to_end().unwrap();
     let rom = ~ROM::new(rom_data);
     rom.dump_header();
-    let bios = io::File::open(&Path::new("bios.dat")).read_to_end();
+    let bios = io::File::open(&Path::new("bios.dat")).read_to_end().unwrap();
     let mmu = MMU::new(rom, bios);
     let mut cpu = CPU::new(~mmu);
     loop {

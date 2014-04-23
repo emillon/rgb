@@ -25,7 +25,7 @@ impl ROM {
     }
 
     pub fn dump_header (&self) {
-        let title = str::from_utf8(self.mem.slice(0x134, 0x143));
+        let title = str::from_utf8(self.mem.slice(0x134, 0x143)).expect("Cannot decode title");
         let ct = self.mem[0x147];
         println!("Title: {:s}", title);
         println!("Type : {:u}", ct as uint);
