@@ -8,9 +8,9 @@ use rom::ROM;
 
 
 enum Mapping<T> {
-    Map_Direct(T), // Read and Write to T
-    Map_Zero,      // Read 0, Write nothing
-    Map_IO(u8),    // I/O on specified port
+    MapDirect(T), // Read and Write to T
+    MapZero,      // Read 0, Write nothing
+    MapIO(u8),    // I/O on specified port
 }
 
 pub struct MMU {
@@ -49,20 +49,20 @@ impl MMU {
         match addr {
             0x0000..0x00FF => {
                 if self.bios_is_mapped {
-                    Map_Direct(&mut self.bios[addru])
+                    MapDirect(&mut self.bios[addru])
                 } else {
-                    Map_Direct(&mut self.rom.mem[addru])
+                    MapDirect(&mut self.rom.mem[addru])
                 }
             }
-            0x0100..0x7FFF => { Map_Direct(&mut self.rom.mem[addru]) }
-            0x8000..0x9FFF => { Map_Direct(&mut self.vram[addru & 0x1fff]) }
-            0xA000..0xBFFF => { Map_Direct(&mut self.eram[addru & 0x1fff]) }
-            0xC000..0xFDFF => { Map_Direct(&mut self.wram[addru & 0x1fff]) }
-            0xFE00..0xFE9F => { Map_Direct(&mut self.oam[addru & 0xFF]) }
-            0xFEA0..0xFEFF => { Map_Zero }
-            0xFF00..0xFF7F => { Map_IO(u16_lo(addr)) }
-            0xFF80..0xFFFE => { Map_Direct(&mut self.zram[addru & 0x7F]) }
-            0xFFFF         => { Map_Direct(&mut self.ie) }
+            0x0100..0x7FFF => { MapDirect(&mut self.rom.mem[addru]) }
+            0x8000..0x9FFF => { MapDirect(&mut self.vram[addru & 0x1fff]) }
+            0xA000..0xBFFF => { MapDirect(&mut self.eram[addru & 0x1fff]) }
+            0xC000..0xFDFF => { MapDirect(&mut self.wram[addru & 0x1fff]) }
+            0xFE00..0xFE9F => { MapDirect(&mut self.oam[addru & 0xFF]) }
+            0xFEA0..0xFEFF => { MapZero }
+            0xFF00..0xFF7F => { MapIO(u16_lo(addr)) }
+            0xFF80..0xFFFE => { MapDirect(&mut self.zram[addru & 0x7F]) }
+            0xFFFF         => { MapDirect(&mut self.ie) }
             _ => {
                 println!("{:04X}", addr as uint);
                 fail!("MMU::rb")
@@ -72,17 +72,17 @@ impl MMU {
 
     pub fn rb(&mut self, addr: u16) -> u8 {
         match self.vmem(addr) {
-            Map_Direct(p) => *p,
-            Map_Zero => 0,
-            Map_IO(port) => read_port(port),
+            MapDirect(p) => *p,
+            MapZero => 0,
+            MapIO(port) => read_port(port),
         }
     }
 
     pub fn wb(&mut self, addr: u16, val: u8) {
         match self.vmem(addr) {
-            Map_Direct(p) => *p = val,
-            Map_Zero => {},
-            Map_IO(addr) => fail!("Output on port {:04X}", addr as uint),
+            MapDirect(p) => *p = val,
+            MapZero => {},
+            MapIO(addr) => fail!("Output on port {:04X}", addr as uint),
         }
     }
 
@@ -97,9 +97,5 @@ impl MMU {
         let hi = u16_hi(val);
         self.wb(addr, lo);
         self.wb(addr, hi);
-    }
-
-    pub fn unmap_bios(mut self) {
-        self.bios_is_mapped = false
     }
 }
