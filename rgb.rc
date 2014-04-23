@@ -1,3 +1,6 @@
+#![feature(phase)]
+#[phase(syntax, link)] extern crate log;
+
 mod bits;
 mod cpu;
 mod io;

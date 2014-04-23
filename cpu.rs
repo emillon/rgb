@@ -451,7 +451,7 @@ impl CPU {
         }
         if (self.pc < 0x0100 && next_pc >= 0x0100) {
             // Jumping out of bios
-            self.mmu.bios_is_mapped = false
+            self.mmu.bios_is_mapped = false;
         }
         // TODO detect PC wrap
         self.pc = next_pc;

@@ -1,16 +1,17 @@
 use std::str;
 
 pub struct ROM {
-    mem: ~[u8]
+    pub mem: ~[u8]
 }
 
 impl ROM {
-    pub fn new(rom_data: ~[u8]) -> ROM {
-        ROM { mem: rom_data }
+    pub fn new(rom_data: &[u8]) -> ROM {
+        ROM { mem: rom_data.to_owned() }
     }
 
     fn read_word_be(&self, offset: u16) -> u16 {
-        (self.mem[offset] as u16 << 8) + self.mem[offset + 1] as u16
+        let offu = offset as uint;
+        (self.mem[offu] as u16 << 8) + self.mem[offu + 1] as u16
     }
 
     fn hdr_checksum(&self) -> u8 {

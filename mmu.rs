@@ -1,5 +1,3 @@
-use std::vec;
-
 use bits::{
     u16_hi,
     u16_lo,
@@ -16,7 +14,7 @@ enum Mapping<T> {
 }
 
 pub struct MMU {
-    bios_is_mapped: bool,
+    pub bios_is_mapped: bool,
     bios: ~[u8],
     eram: ~[u8],
     ie: u8,
@@ -28,17 +26,17 @@ pub struct MMU {
 }
 
 impl MMU {
-    pub fn new(rom: ~ROM, bios: ~[u8]) -> MMU {
+    pub fn new(rom: ~ROM, bios: &[u8]) -> MMU {
         MMU {
             bios_is_mapped: true,
-            bios: bios,
+            bios: bios.to_owned(),
             eram: ~[], // FIXME
             ie: 0,
-            oam: vec::from_elem(160, 0 as u8),
+            oam: ~[0, ..160],
             rom: rom,
-            vram: vec::from_elem(8192, 0 as u8),
-            wram: vec::from_elem(8192, 0 as u8),
-            zram: vec::from_elem(127, 0 as u8),
+            vram: ~[0, ..8192],
+            wram: ~[0, ..8192],
+            zram: ~[0, ..127],
         }
     }
 
@@ -47,22 +45,23 @@ impl MMU {
     }
 
     fn vmem<'a> (&'a mut self, addr: u16) -> Mapping<&'a mut u8> {
+        let addru = addr as uint;
         match addr {
             0x0000..0x00FF => {
                 if self.bios_is_mapped {
-                    Map_Direct(&mut self.bios[addr])
+                    Map_Direct(&mut self.bios[addru])
                 } else {
-                    Map_Direct(&mut self.rom.mem[addr])
+                    Map_Direct(&mut self.rom.mem[addru])
                 }
             }
-            0x0100..0x7FFF => { Map_Direct(&mut self.rom.mem[addr]) }
-            0x8000..0x9FFF => { Map_Direct(&mut self.vram[addr & 0x1fff]) }
-            0xA000..0xBFFF => { Map_Direct(&mut self.eram[addr & 0x1fff]) }
-            0xC000..0xFDFF => { Map_Direct(&mut self.wram[addr & 0x1fff]) }
-            0xFE00..0xFE9F => { Map_Direct(&mut self.oam[addr & 0xFF]) }
+            0x0100..0x7FFF => { Map_Direct(&mut self.rom.mem[addru]) }
+            0x8000..0x9FFF => { Map_Direct(&mut self.vram[addru & 0x1fff]) }
+            0xA000..0xBFFF => { Map_Direct(&mut self.eram[addru & 0x1fff]) }
+            0xC000..0xFDFF => { Map_Direct(&mut self.wram[addru & 0x1fff]) }
+            0xFE00..0xFE9F => { Map_Direct(&mut self.oam[addru & 0xFF]) }
             0xFEA0..0xFEFF => { Map_Zero }
             0xFF00..0xFF7F => { Map_IO(u16_lo(addr)) }
-            0xFF80..0xFFFE => { Map_Direct(&mut self.zram[addr & 0x7F]) }
+            0xFF80..0xFFFE => { Map_Direct(&mut self.zram[addru & 0x7F]) }
             0xFFFF         => { Map_Direct(&mut self.ie) }
             _ => {
                 println!("{:04X}", addr as uint);
@@ -98,5 +97,9 @@ impl MMU {
         let hi = u16_hi(val);
         self.wb(addr, lo);
         self.wb(addr, hi);
+    }
+
+    pub fn unmap_bios(mut self) {
+        self.bios_is_mapped = false
     }
 }
